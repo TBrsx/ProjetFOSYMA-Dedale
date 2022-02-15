@@ -1,3 +1,7 @@
+Our take/solution on the Dedale project, done during the "FOSYMA" teaching at Sorbonne University. We worked on the "Collect maximum amount of treasure" goal.
+
+See below original readme taken from Dedale Project :
+
 # Welcome to the Dedale project.
 
 This project is developed at Sorbonne University, Paris, France. It is used in both research and teaching activities. Considering the later, during the FoSyMa course (from the French “Fondement des Systèmes Multi-Agents”) as a practical application of Multi-Agents Systems (MAS). 
