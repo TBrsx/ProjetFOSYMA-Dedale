@@ -10,7 +10,7 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
-import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import jade.core.behaviours.SimpleBehaviour;
 
 
@@ -80,7 +80,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			this.closedNodes.add(myPosition);
 			this.openNodes.remove(myPosition);
 
-			this.myMap.addNode(myPosition,MapAttribute.closed);
+			this.myMap.addNode(myPosition, new MapAttribute("closed",this.myAgent.getLocalName()));
 
 			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 			String nextNode=null;
@@ -90,7 +90,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				if (!this.closedNodes.contains(nodeId)){
 					if (!this.openNodes.contains(nodeId)){
 						this.openNodes.add(nodeId);
-						this.myMap.addNode(nodeId, MapAttribute.open);
+						this.myMap.addNode(myPosition, new MapAttribute("open",this.myAgent.getLocalName()));
 						this.myMap.addEdge(myPosition, nodeId);	
 					}else{
 						//the node exist, but not necessarily the edge

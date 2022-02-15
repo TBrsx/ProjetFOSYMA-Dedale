@@ -30,20 +30,15 @@ import javafx.application.Platform;
  * The knowledge representation is not well written (at all), it is just given as a minimal example.</br>
  * The viewer methods are not independent of the data structure, and the dijkstra is recomputed every-time.
  * 
- * @author hc
+ * 
  */
 public class MapRepresentation implements Serializable {
 
 	/**
-	 * A node is open, closed, or agent
-	 * @author hc
-	 *
+	 * A node is open, closed, or agent, and has a claimedBy attribute which state which agent has claimed it
+	 * 
 	 */
-
-	public enum MapAttribute {	
-		agent,open,closed;
-
-	}
+	
 
 	private static final long serialVersionUID = -1333959882640838272L;
 
@@ -51,9 +46,9 @@ public class MapRepresentation implements Serializable {
 	 * Parameters for graph rendering
 	 ********************************/
 
-	private String defaultNodeStyle= "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
-	private String nodeStyle_open = "node.agent {"+"fill-color: forestgreen;"+"}";
-	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
+	private String defaultNodeStyle= " node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
+	private String nodeStyle_open = " node.agent {"+"fill-color: forestgreen;"+"}";
+	private String nodeStyle_agent = " node.open {"+"fill-color: blue;"+"}";
 	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
 
 	private Graph g; //data structure non serializable
@@ -76,6 +71,20 @@ public class MapRepresentation implements Serializable {
 
 		this.nbEdges=0;
 	}
+	
+	
+	/**
+	 * Give the claimant of a node given its id
+	 * @param id id of the node
+	 * @return The claimant of the given node, or null if this node doesn't exist in the map
+	 */
+	public synchronized String getNodeClaimant(String id) {
+		if (this.g.getNode(id) == null) {
+			return null;
+		}else {
+			return this.g.getNode(id).getAttribute("claimant").toString();
+		}
+	}
 
 	/**
 	 * Add or replace a node and its attribute 
@@ -90,19 +99,37 @@ public class MapRepresentation implements Serializable {
 			n=this.g.getNode(id);
 		}
 		n.clearAttributes();
-		n.setAttribute("ui.class", mapAttribute.toString());
+		n.setAttribute("ui.class", mapAttribute.getState());
 		n.setAttribute("ui.label",id);
+		n.setAttribute("claimant", mapAttribute.getClaimant());
 	}
 
 	/**
 	 * Add a node to the graph. Do nothing if the node already exists.
-	 * If new, it is labeled as open (non-visited)
+	 * If new, it is labeled as open (non-visited) and there is no claimant (empty string)
 	 * @param id id of the node
 	 * @return true if added
 	 */
 	public synchronized boolean addNewNode(String id) {
 		if (this.g.getNode(id)==null){
-			addNode(id,MapAttribute.open);
+			MapAttribute mapAtt = new MapAttribute("open","");
+			addNode(id,mapAtt);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Add a node to the graph, and add its claimant to its attribute. Do nothing if the node already exists.
+	 * If new, it is labeled as open (non-visited)
+	 * @param id id of the node
+	 * @param claimant name of the claimant
+	 * @return true if added
+	 */
+	public synchronized boolean addNewNode(String id,String claimant) {
+		if (this.g.getNode(id)==null){
+			MapAttribute mapAtt = new MapAttribute("open","");
+			addNode(id,mapAtt);
 			return true;
 		}
 		return false;
@@ -176,7 +203,7 @@ public class MapRepresentation implements Serializable {
 
 	public List<String> getOpenNodes(){
 		return this.g.nodes()
-				.filter(x ->x .getAttribute("ui.class")==MapAttribute.open.toString()) 
+				.filter(x ->x .getAttribute("ui.class")=="open") 
 				.map(Node::getId)
 				.collect(Collectors.toList());
 	}
@@ -201,7 +228,9 @@ public class MapRepresentation implements Serializable {
 		Iterator<Node> iter=this.g.iterator();
 		while(iter.hasNext()){
 			Node n=iter.next();
-			sg.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
+			String test1 = n.getAttribute("ui.class").toString();
+			String test2 = n.getAttribute("claimant").toString();
+			sg.addNode(n.getId(),new MapAttribute(test1,test2));
 		}
 		Iterator<Edge> iterE=this.g.edges().iterator();
 		while (iterE.hasNext()){
@@ -230,7 +259,9 @@ public class MapRepresentation implements Serializable {
 
 		Integer nbEd=0;
 		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
-			this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
+			Node newNode = this.g.addNode(n.getNodeId());
+			newNode.setAttribute("ui.class", n.getNodeContent().getState());
+			newNode.setAttribute("claimant", n.getNodeContent().getClaimant());
 			for(String s:this.sg.getEdges(n.getNodeId())){
 				this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
 				nbEd++;
@@ -285,12 +316,14 @@ public class MapRepresentation implements Serializable {
 			}
 			if (!alreadyIn) {
 				newnode.setAttribute("ui.label", newnode.getId());
-				newnode.setAttribute("ui.class", n.getNodeContent().toString());
+				newnode.setAttribute("ui.class", n.getNodeContent().getState());
+				newnode.setAttribute("claimant", n.getNodeContent().getClaimant());
 			}else{
 				newnode=this.g.getNode(n.getNodeId());
 				//3 check its attribute. If it is below the one received, update it.
-				if (((String) newnode.getAttribute("ui.class"))==MapAttribute.closed.toString() || n.getNodeContent().toString()==MapAttribute.closed.toString()) {
-					newnode.setAttribute("ui.class",MapAttribute.closed.toString());
+				if (((String) newnode.getAttribute("ui.class"))=="closed" || n.getNodeContent().toString()=="closed") {
+					newnode.setAttribute("ui.class","closed");
+					newnode.setAttribute("claimant", n.getNodeContent().getClaimant());
 				}
 			}
 		}
@@ -310,7 +343,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public boolean hasOpenNode() {
 		return (this.g.nodes()
-				.filter(n -> n.getAttribute("ui.class")==MapAttribute.open.toString())
+				.filter(n -> n.getAttribute("ui.class")=="open")
 				.findAny()).isPresent();
 	}
 
