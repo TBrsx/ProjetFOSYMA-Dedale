@@ -50,6 +50,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	 * Current knowledge of the agent regarding the environment
 	 */
 	private MapRepresentation myMap;
+	private int stepCount=0;
 
 	private List<String> list_agentNames;
 
@@ -86,7 +87,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
 			try {
-				this.myAgent.doWait(500);
+				this.myAgent.doWait(400);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -112,7 +113,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			if (!this.myMap.hasOpenNode()){
 				//Explo finished
 				finished=true;
-				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed.");
+				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed. Done in " + Integer.toString(this.stepCount) + " moves");
 			}else{
 				//4) select next move.
 				//4.1 If there exist one open node directly reachable, go for it,
@@ -120,7 +121,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				if (nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+					nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition,this.myAgent.getLocalName()).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
 					//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode);
 				}else {
 					//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode);
@@ -142,7 +143,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 					}
 					this.myMap.mergeMap(sgreceived);
 				}
-
+				this.stepCount++;
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
 

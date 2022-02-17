@@ -183,11 +183,11 @@ public class MapRepresentation implements Serializable {
 		return shortestPath;
 	}
 
-	public List<String> getShortestPathToClosestOpenNode(String myPosition) {
+	public List<String> getShortestPathToClosestOpenNode(String myPosition,String askName) {
 		//1) Get all openNodes
-		List<String> opennodes=getOpenNodes();
+		List<String> opennodes=getOpenNodes(askName);
 
-		//2) select the closest one
+		//2) select the closest one that is
 		List<Couple<String,Integer>> lc=
 				opennodes.stream()
 				.map(on -> (getShortestPath(myPosition,on)!=null)? new Couple<String, Integer>(on,getShortestPath(myPosition,on).size()): new Couple<String, Integer>(on,Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
@@ -201,11 +201,20 @@ public class MapRepresentation implements Serializable {
 
 
 
-	public List<String> getOpenNodes(){
-		return this.g.nodes()
-				.filter(x ->x .getAttribute("ui.class")=="open") 
+	public List<String> getOpenNodes(String askName){
+		List<String> computedList = this.g.nodes()
+				.filter(x ->x .getAttribute("ui.class")=="open")
+				.filter(x->x .getAttribute("claimant").toString().equalsIgnoreCase(askName)
+					|| x .getAttribute("claimant").toString().equalsIgnoreCase(""))
 				.map(Node::getId)
 				.collect(Collectors.toList());
+		if (computedList.isEmpty()) {
+			return this.g.nodes().filter(x ->x .getAttribute("ui.class")=="open")
+						.map(Node::getId)
+						.collect(Collectors.toList());
+		}else {
+			return computedList;
+		}
 	}
 
 

@@ -44,7 +44,7 @@ public class Principal {
 	public static void main(String[] args){
 
 		if(ConfigurationFile.COMPUTERisMAIN){
-			//Whe should create the Platform and the GateKeeper, whether the platform is distributed or not 
+			//We should create the Platform and the GateKeeper, whether the platform is distributed or not 
 
 			//1), create the platform (Main container (DF+AMS) + containers + monitoring agents : RMA and SNIFFER)
 			rt=emptyPlatform(containerList);
