@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -43,6 +44,8 @@ import jade.lang.acl.UnreadableException;
 public class ExploCoopBehaviour extends SimpleBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
+	
+	private static final int MAX_ACCEPTED_DIVERGEANCE = 5;
 
 	private boolean finished = false;
 
@@ -53,6 +56,9 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	private int stepCount=0;
 
 	private List<String> list_agentNames;
+	
+	private LinkedList<String> pathToFollow = new LinkedList<String>();
+	private int divergeanceFromPath = 0;
 
 /**
  * 
@@ -77,7 +83,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - This node claimant was " + this.myMap.getNodeClaimant(myPosition));
+		//System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - This node claimant was " + this.myMap.getNodeClaimant(myPosition));
 
 		if (myPosition!=null){
 			//List of observable from the agent's current position
@@ -94,7 +100,9 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 
 			//1) remove the current node from openlist and add it to closedNodes + claim it.
 			this.myMap.addNode(myPosition, new MapAttribute("closed",this.myAgent.getLocalName()));
-			
+			if (myPosition.equalsIgnoreCase(this.pathToFollow.peek())) {
+				this.pathToFollow.removeFirst();
+			}
 
 			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes + claim them.
 			String nextNode=null;
@@ -116,14 +124,24 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed. Done in " + Integer.toString(this.stepCount) + " moves");
 			}else{
 				//4) select next move.
-				//4.1 If there exist one open node directly reachable, go for it,
+				//4.1 If there exist one open node directly reachable, go for it, add it to the head of the path it wanted to take
 				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 				if (nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition,this.myAgent.getLocalName()).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+					if (this.pathToFollow.isEmpty()) {
+						this.pathToFollow = this.myMap.getShortestPathToClosestOpenNode(myPosition,this.myAgent.getLocalName());//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+					}
+					this.divergeanceFromPath = 0;
+					nextNode = this.pathToFollow.peek();
 					//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode);
 				}else {
+					this.divergeanceFromPath++;
+					if (this.divergeanceFromPath>MAX_ACCEPTED_DIVERGEANCE) {
+						this.pathToFollow = new LinkedList<String>();
+					}else {
+						this.pathToFollow.addFirst(nextNode);
+					}
 					//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode);
 				}
 
@@ -144,6 +162,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 					this.myMap.mergeMap(sgreceived);
 				}
 				this.stepCount++;
+				System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - Going to " + nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
 

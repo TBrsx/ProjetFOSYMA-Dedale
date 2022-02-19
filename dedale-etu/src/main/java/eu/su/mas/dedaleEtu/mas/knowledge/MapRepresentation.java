@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -162,8 +163,8 @@ public class MapRepresentation implements Serializable {
 	 * @param idTo id of the destination node
 	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
 	 */
-	public synchronized List<String> getShortestPath(String idFrom,String idTo){
-		List<String> shortestPath=new ArrayList<String>();
+	public synchronized LinkedList<String> getShortestPath(String idFrom,String idTo){
+		LinkedList<String> shortestPath=new LinkedList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
 		dijkstra.init(g);
@@ -183,7 +184,7 @@ public class MapRepresentation implements Serializable {
 		return shortestPath;
 	}
 
-	public List<String> getShortestPathToClosestOpenNode(String myPosition,String askName) {
+	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition,String askName) {
 		//1) Get all openNodes
 		List<String> opennodes=getOpenNodes(askName);
 
