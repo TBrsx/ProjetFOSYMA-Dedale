@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -101,8 +102,14 @@ public class MapRepresentation implements Serializable {
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.getState());
-		n.setAttribute("ui.label",id);
 		n.setAttribute("claimant", mapAttribute.getClaimant());
+		
+		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
+			n.setAttribute("ui.label",id);
+		}else {
+			n.setAttribute("ui.label",id+"    "+mapAttribute.getClaimant().substring(0, mapAttribute.getClaimant().length() - 5));
+		}
+		
 	}
 
 	/**
@@ -129,7 +136,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public synchronized boolean addNewNode(String id,String claimant) {
 		if (this.g.getNode(id)==null){
-			MapAttribute mapAtt = new MapAttribute("open","");
+			MapAttribute mapAtt = new MapAttribute("open",claimant);
 			addNode(id,mapAtt);
 			return true;
 		}
@@ -238,9 +245,7 @@ public class MapRepresentation implements Serializable {
 		Iterator<Node> iter=this.g.iterator();
 		while(iter.hasNext()){
 			Node n=iter.next();
-			String test1 = n.getAttribute("ui.class").toString();
-			String test2 = n.getAttribute("claimant").toString();
-			sg.addNode(n.getId(),new MapAttribute(test1,test2));
+			sg.addNode(n.getId(),new MapAttribute(n.getAttribute("ui.class").toString(),n.getAttribute("claimant").toString()));
 		}
 		Iterator<Edge> iterE=this.g.edges().iterator();
 		while (iterE.hasNext()){
@@ -272,6 +277,7 @@ public class MapRepresentation implements Serializable {
 			Node newNode = this.g.addNode(n.getNodeId());
 			newNode.setAttribute("ui.class", n.getNodeContent().getState());
 			newNode.setAttribute("claimant", n.getNodeContent().getClaimant());
+			addNode(n.getNodeId(),n.getNodeContent());
 			for(String s:this.sg.getEdges(n.getNodeId())){
 				this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
 				nbEd++;
@@ -314,27 +320,20 @@ public class MapRepresentation implements Serializable {
 		//System.out.println("We currently blindy add the topology");
 
 		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
-			//System.out.println(n);
-			boolean alreadyIn =false;
-			//1 Add the node
-			Node newnode=null;
-			try {
-				newnode=this.g.addNode(n.getNodeId());
-			}	catch(IdAlreadyInUseException e) {
-				alreadyIn=true;
-				//System.out.println("Already in"+n.getNodeId());
+			String claimclaim = n.getNodeContent().getClaimant();
+			//Add it (Reminder : does nothing if already in the map)
+			addNewNode(n.getNodeId(),claimclaim);
+			
+			//TODO : Always keep first agent as claimant in case of conflict, we need to change this
+			if ((((String) this.g.getNode(n.getNodeId()).getAttribute("claimant"))=="1stAgent" || n.getNodeContent().getClaimant()=="2ndAgent")
+					|| (((String) this.g.getNode(n.getNodeId()).getAttribute("claimant"))=="2ndAgent" || n.getNodeContent().getClaimant()=="1stAgent")) {
+				claimclaim = "1stAgent";
 			}
-			if (!alreadyIn) {
-				newnode.setAttribute("ui.label", newnode.getId());
-				newnode.setAttribute("ui.class", n.getNodeContent().getState());
-				newnode.setAttribute("claimant", n.getNodeContent().getClaimant());
-			}else{
-				newnode=this.g.getNode(n.getNodeId());
-				//3 check its attribute. If it is below the one received, update it.
-				if (((String) newnode.getAttribute("ui.class"))=="closed" || n.getNodeContent().toString()=="closed") {
-					newnode.setAttribute("ui.class","closed");
-					newnode.setAttribute("claimant", n.getNodeContent().getClaimant());
-				}
+
+			
+			//check its attribute. If I knew or just learned it was closed, it's closed on my map.
+			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class"))=="closed" || n.getNodeContent().getState()=="closed") {
+				addNode(n.getNodeId(),new MapAttribute("closed",claimclaim));
 			}
 		}
 
@@ -352,6 +351,12 @@ public class MapRepresentation implements Serializable {
 	 * @return true if there exist at least one openNode on the graph 
 	 */
 	public boolean hasOpenNode() {
+		List<String> truc1 = this.g.nodes().filter(x ->x .getAttribute("ui.class")=="open")
+		.map(Node::getId)
+		.collect(Collectors.toList());
+		List<String> truc2 = this.g.nodes().filter(x ->x .getAttribute("ui.class")=="closed")
+				.map(Node::getId)
+				.collect(Collectors.toList());
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class")=="open")
 				.findAny()).isPresent();

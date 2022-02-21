@@ -17,6 +17,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.ExploCoopBehaviour;
 
 
 import jade.core.AID;
@@ -93,7 +94,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
 			try {
-				this.myAgent.doWait(400);
+				this.myAgent.doWait(500);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -120,6 +121,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			//3) while openNodes is not empty, continues.
 			if (!this.myMap.hasOpenNode()){
 				//Explo finished
+				this.myAgent.addBehaviour(new EndedExploCoopBehaviour((AbstractDedaleAgent) this.myAgent,this.myMap,this.list_agentNames));
 				finished=true;
 				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed. Done in " + Integer.toString(this.stepCount) + " moves");
 			}else{
@@ -162,7 +164,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 					this.myMap.mergeMap(sgreceived);
 				}
 				this.stepCount++;
-				System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - Going to " + nextNode);
+				//System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - Going to " + nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
 
