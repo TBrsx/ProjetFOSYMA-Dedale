@@ -20,3 +20,40 @@ while facing, or not, other teams.
 This game is initally inspired by the famous "Hunt the Wumpus"  of [Gregory Yob](https://en.wikipedia.org/wiki/Gregory_Yob).
 
 For more details, see Dedale's website : https://dedale.gitlab.io/
+
+Protocole de résolution d'interlocking:
+```mermaid
+sequenceDiagram
+A ->> B: query-if "Je te bloque?"
+alt non
+B -->> A: disconfirm
+Note left of A: A attend un peu
+else oui
+B -->> A: confirm
+Note over A,B: A et B calculent la distance du branchement le plus proche
+A ->> B: inform "ma distance"
+Note right of B: B choisi qui bouge
+alt dA >= dB
+B -->> A: inform "Je recule, voilà le prochain branchement"
+Note over A,B: B recule, A avance
+Note right of B: B est arrivé sur une des sorties
+Note left of A: A est arrivé au branchement
+A ->> B: inform "Je suis arrivé, tu peux repartir"
+Note left of A: A bouge sur une sortie libre
+Note right of B: B bouge sur le branchement
+B -->> A: inform "Je pars"
+Note left of A: A attends un peu et reprend son chemin
+else dA < dB
+B -->> A: inform "Tu recules"
+A ->> B: inform "Je recule, voilà le prochai branchement"
+Note over A,B: B avance, A recule
+Note left of A: A est arrivé sur une des sorties
+Note right of B: B est arrivé au branchement
+B -->> A: inform "Je suis arrivé, tu peux repartir"
+Note right of B: B bouge sur une sortie libre
+Note left of A: A bouge sur le branchement
+A ->> B: inform "Je pars"
+Note right of B: B attends un peu et reprend son chemin
+end
+end
+```
