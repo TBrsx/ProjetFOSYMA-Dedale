@@ -30,17 +30,7 @@ import jade.lang.acl.UnreadableException;
 
 /**
  * <pre>
- * This behaviour allows an agent to explore the environment and learn the associated topological map.
- * The algorithm is a pseudo - DFS computationally consuming because its not optimised at all.
- * 
- * When all the nodes around him are visited, the agent randomly select an open node and go there to restart its dfs. 
- * This (non optimal) behaviour is done until all nodes are explored. 
- * 
- * Warning, this behaviour does not save the content of visited nodes, only the topology.
- * Warning, the sub-behaviour ShareMap periodically share the whole map
- * </pre>
- * @author hc
- *
+ * Agent move randomly when he thinks he finished the exploration. Go back to ExploCoopBehavior if he finds a new open node
  */
 public class EndedExploCoopBehaviour extends SimpleBehaviour {
 
@@ -78,6 +68,8 @@ public class EndedExploCoopBehaviour extends SimpleBehaviour {
 
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		this.myMap.addNewNode(myPosition,this.myAgent.getLocalName()); //If it's a new node we add it, otherwise do nothing
+
 		//System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - This node claimant was " + this.myMap.getNodeClaimant(myPosition));
 
 		if (myPosition!=null){
@@ -93,8 +85,12 @@ public class EndedExploCoopBehaviour extends SimpleBehaviour {
 				e.printStackTrace();
 			}
 
-			//1) remove the current node from openlist and add it to closedNodes + claim it.
-			this.myMap.addNode(myPosition, new MapAttribute("closed",this.myAgent.getLocalName()));
+			//1) remove the current node from openlist and add it to closedNodes + claim it if it's not already claimed.
+			String claimant = this.myAgent.getLocalName();
+			if (!this.myMap.getNodeClaimant(myPosition).equalsIgnoreCase("")){
+				claimant = this.myMap.getNodeClaimant(myPosition);
+			}
+			this.myMap.addNode(myPosition, new MapAttribute("closed",claimant));
 
 			//2) get the surrounding nodes and, if not in closedNodes, go back to the ExploCoopBehaviour
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
