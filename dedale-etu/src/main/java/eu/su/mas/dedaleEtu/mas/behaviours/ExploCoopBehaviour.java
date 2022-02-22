@@ -84,6 +84,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		this.myMap.addNewNode(myPosition,this.myAgent.getLocalName()); //If it's a new node we add it, otherwise do nothing
 		//System.out.println(this.myAgent.getLocalName()+ "- I'm at " +myPosition + " - This node claimant was " + this.myMap.getNodeClaimant(myPosition));
 
 		if (myPosition!=null){
@@ -94,13 +95,17 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
 			try {
-				this.myAgent.doWait(500);
+				this.myAgent.doWait(1000);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
-			//1) remove the current node from openlist and add it to closedNodes + claim it.
-			this.myMap.addNode(myPosition, new MapAttribute("closed",this.myAgent.getLocalName()));
+			//1) remove the current node from openlist and add it to closedNodes + claim it if it's not already claimed.
+			String claimant = this.myAgent.getLocalName();
+			if (!this.myMap.getNodeClaimant(myPosition).equalsIgnoreCase("")){
+				claimant = this.myMap.getNodeClaimant(myPosition);
+			}
+			this.myMap.addNode(myPosition, new MapAttribute("closed",claimant));
 			if (myPosition.equalsIgnoreCase(this.pathToFollow.peek())) {
 				this.pathToFollow.removeFirst();
 			}
