@@ -21,7 +21,7 @@ public class MapAttribute implements Serializable {
 		this.state = "open";
 		this.claimant = "";
 		this.occupied = "";
-		this.treasure = new Couple("", 0);
+		this.treasure = new Couple<String, Integer>("", 0);
 	}
 
 	public MapAttribute(String state, String claimant) {

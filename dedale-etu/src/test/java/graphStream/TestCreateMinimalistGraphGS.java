@@ -1,8 +1,6 @@
 package graphStream;
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.*;
-import org.graphstream.ui.fx_viewer.FxViewer;
-import org.graphstream.ui.view.Viewer;
 
 
 /**

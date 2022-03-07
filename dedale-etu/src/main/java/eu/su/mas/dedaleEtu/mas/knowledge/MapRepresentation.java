@@ -1,16 +1,12 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
@@ -21,8 +17,6 @@ import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.fx_viewer.FxViewer;
 import org.graphstream.ui.view.Viewer;
-import org.graphstream.ui.view.Viewer.CloseFramePolicy;
-
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
 import javafx.application.Platform;
@@ -194,7 +188,6 @@ public class MapRepresentation implements Serializable {
 	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition,String askName) {
 		//1) Get all openNodes
 		List<String> opennodes=getOpenNodes(askName);
-
 		//2) select the closest one that is
 		List<Couple<String,Integer>> lc=
 				opennodes.stream()
@@ -316,8 +309,6 @@ public class MapRepresentation implements Serializable {
 	}
 
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
-		//System.out.println("You should decide what you want to save and how");
-		//System.out.println("We currently blindy add the topology");
 
 		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
 			String claimclaim = n.getNodeContent().getClaimant();
@@ -331,7 +322,7 @@ public class MapRepresentation implements Serializable {
 			}
 
 			
-			//check its attribute. If I knew or just learned it was closed, it's closed on my map.
+			//check its attribute. If I knew or just learned it was closed, it's now closed on my map.
 			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class"))=="closed" || n.getNodeContent().getState()=="closed") {
 				addNode(n.getNodeId(),new MapAttribute("closed",claimclaim));
 			}
@@ -351,12 +342,6 @@ public class MapRepresentation implements Serializable {
 	 * @return true if there exist at least one openNode on the graph 
 	 */
 	public boolean hasOpenNode() {
-		List<String> truc1 = this.g.nodes().filter(x ->x .getAttribute("ui.class")=="open")
-		.map(Node::getId)
-		.collect(Collectors.toList());
-		List<String> truc2 = this.g.nodes().filter(x ->x .getAttribute("ui.class")=="closed")
-				.map(Node::getId)
-				.collect(Collectors.toList());
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class")=="open")
 				.findAny()).isPresent();

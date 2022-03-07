@@ -8,7 +8,6 @@ import org.graphstream.algorithm.generator.GridGenerator;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.ui.fx_viewer.FxViewer;
 import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.view.Viewer;
 
@@ -20,6 +19,7 @@ import org.graphstream.ui.view.Viewer;
  */
 public class TestCreateGraphGS {
 
+	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 		
 		//color of a node according to its type
@@ -103,6 +103,7 @@ public class TestCreateGraphGS {
 	 * @param size number of iteration, the greater the bigger maze.
 	 * @return a new graph
 	 */
+	@SuppressWarnings("unused")
 	private static Graph generateGraph(boolean type,int size){
 		Graph g=new SingleGraph("Random graph");
 		Generator gen;

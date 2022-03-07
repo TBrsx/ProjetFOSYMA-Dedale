@@ -1,1 +1,1 @@
-http://localhost:7778/acc
+http://tristan-asus-ubuntu:7778/acc
