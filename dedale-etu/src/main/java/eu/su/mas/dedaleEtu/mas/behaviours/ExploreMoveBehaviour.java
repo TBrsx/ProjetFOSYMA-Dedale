@@ -101,14 +101,14 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 			} else {
 				// 3.4) If there is no open node, the exploration *should* be complete
-				System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
+				//System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
 				this.returnCode = NO_OPEN_NODE;
 			}
 			
 			//Move
 			if (nextNode != null) {
 				this.myAgent.setNextPosition(nextNode);
-				System.out.println(this.myAgent.getLocalName() + "- I'm at " + myPosition  +", going to " + this.myAgent.getNextPosition());
+				//System.out.println(this.myAgent.getLocalName() + "- I'm at " + myPosition  +", going to " + this.myAgent.getNextPosition());
 				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
 					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
 					this.returnCode = INTERLOCKING;
