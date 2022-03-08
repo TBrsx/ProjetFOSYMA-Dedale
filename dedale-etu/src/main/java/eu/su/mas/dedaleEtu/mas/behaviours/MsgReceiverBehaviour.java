@@ -14,9 +14,10 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	private static final int NO_MSG = 0;
 	private static final int SHARE_TOPO = 1;
 	private static final int INTERLOCKING = 2;
-	
+	private static final int HANDSHAKE = 3;
+
 	private int returnCode = NO_MSG;
-	
+
 	ExploreCoopAgent agent;
 
 	public MsgReceiverBehaviour(ExploreCoopAgent ag) {
@@ -25,46 +26,55 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	}
 
 	public void action() {
-		
-		//====Daemons
-		//Receive a position
+
+		// ==== Daemons ====
+		// Receive a position
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-POSITION"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
-			//TODO : Mettre à jour les connaissances sur les positions
+			// TODO : Mettre à jour les connaissances sur les positions
 		}
-		
-		
-		//====Messages that calls for a change of state, first one read 
+
+		// ==== Messages that calls for a change of state====
+		// First one read is the one treated
 		msgReceived = null;
-		
-		//Map sharing
-		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
-				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+
+		// Handshake try
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("HANDSHAKE"),
+				MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
 		msgReceived = this.myAgent.receive(msgTemplate);
+
 		if (msgReceived != null) {
-			returnCode = SHARE_TOPO;
-			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
-			try {
-				sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-			} catch (UnreadableException e) {
-				e.printStackTrace();
-			}
-			this.agent.getMyMap().mergeMap(sgreceived);
-		}else {
-		//Interlocking
-			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
-					MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+			returnCode = HANDSHAKE;
+		} else {
+			// Map sharing
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 			msgReceived = this.myAgent.receive(msgTemplate);
-			returnCode = INTERLOCKING;
+			if (msgReceived != null) {
+				returnCode = SHARE_TOPO;
+				SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
+				try {
+					sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+				this.agent.getMyMap().mergeMap(sgreceived);
+			} else {
+				// Interlocking
+				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+						MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+				msgReceived = this.myAgent.receive(msgTemplate);
+				returnCode = INTERLOCKING;
+			}
 		}
-		
+
 		if (msgReceived != null) {
 			getDataStore().put("received-message", msgReceived);
 		}
 	}
-	
+
 	public int onEnd() {
 		return returnCode;
 	}
