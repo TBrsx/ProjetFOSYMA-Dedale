@@ -26,9 +26,23 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	public void action() {
 		
-		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
+		//====Daemons
+		//Receive a position
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-POSITION"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+		if (msgReceived != null) {
+			//TODO : Mettre à jour les connaissances sur les positions
+		}
+		
+		
+		//====Messages that calls for a change of state, first one read 
+		msgReceived = null;
+		
+		//Map sharing
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+		msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
 			returnCode = SHARE_TOPO;
 			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
@@ -38,6 +52,16 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 				e.printStackTrace();
 			}
 			this.agent.getMyMap().mergeMap(sgreceived);
+		}else {
+		//Interlocking
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+					MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+			msgReceived = this.myAgent.receive(msgTemplate);
+			returnCode = INTERLOCKING;
+		}
+		
+		if (msgReceived != null) {
+			getDataStore().put("received-message", msgReceived);
 		}
 	}
 	
