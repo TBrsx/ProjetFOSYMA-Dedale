@@ -1,6 +1,0 @@
-This file keeps tracks of ideas and will help when writing the report/doing the presentation to justify choices and explain what we have done
-
-===MAP===
-Agents "claim" nodes they see/walk on unless they know that this node is already claimed by an agent.
-Agents will prioritize open nodes that are claimed by them
-Agents explorers continue to move after they think that there is no more open nodes
