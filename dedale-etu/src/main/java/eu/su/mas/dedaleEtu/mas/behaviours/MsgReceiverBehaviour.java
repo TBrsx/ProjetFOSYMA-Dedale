@@ -11,6 +11,12 @@ import jade.lang.acl.UnreadableException;
 public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 5871538328316209119L;
+	private static final int NO_MSG = 0;
+	private static final int SHARE_TOPO = 1;
+	private static final int INTERLOCKING = 2;
+	
+	private int returnCode = NO_MSG;
+	
 	ExploreCoopAgent agent;
 
 	public MsgReceiverBehaviour(ExploreCoopAgent ag) {
@@ -19,10 +25,12 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	}
 
 	public void action() {
+		
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
+			returnCode = SHARE_TOPO;
 			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
 			try {
 				sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
@@ -31,6 +39,10 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 			}
 			this.agent.getMyMap().mergeMap(sgreceived);
 		}
+	}
+	
+	public int onEnd() {
+		return returnCode;
 	}
 
 }
