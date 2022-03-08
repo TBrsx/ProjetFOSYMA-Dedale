@@ -1,12 +1,9 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -347,5 +344,34 @@ public class MapRepresentation implements Serializable {
 				.findAny()).isPresent();
 	}
 
+	private List<String> getNextNeighboringNodes(String centerNode, String prevNode) {
+		Iterator<Edge> edges = g.getNode(centerNode).edges().iterator();
+		List<String> nodes = new ArrayList<>();
+		while (edges.hasNext()) {
+			Edge e = edges.next();
+			String node = e.getTargetNode().getId();
+			if (!node.equals(prevNode)) {
+				nodes.add(node);
+			}
+		}
+		return nodes;
+	}
 
+	public LinkedList<String> getNearestFork(String prevNode, String currentNode) {
+		LinkedList<String> path = new LinkedList<>();
+		List<String> neighboringNodes = getNextNeighboringNodes(currentNode, prevNode);
+		while (neighboringNodes.size() == 2) {
+			prevNode = currentNode;
+			currentNode = neighboringNodes.get(0);
+			path.add(currentNode);
+			neighboringNodes = getNextNeighboringNodes(currentNode, prevNode);
+		}
+		if (neighboringNodes.size() < 2) {
+			return new LinkedList<>();
+		} else {
+			Random rand = new Random();
+			path.add(neighboringNodes.get(rand.nextInt(neighboringNodes.size())));
+			return path;
+		}
+	}
 }
