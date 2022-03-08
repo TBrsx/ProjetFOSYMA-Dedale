@@ -13,21 +13,14 @@ import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
-/**
- * The agent periodically share its map. It blindly tries to send all its graph
- * to its friend(s) If it was written properly, this sharing action would NOT be
- * in a ticker behaviour and only a subgraph would be shared.
- * 
- * @author hc
- *
- */
+
 public class ShareMapBehaviour extends OneShotBehaviour {
 
 	private ExploreCoopAgent myAgent;
 	private List<String> receivers;
 
 	/**
-	 * The agent periodically share its map. It blindly tries to send all its graph
+	 * The agent share its map. It blindly tries to send all its graph
 	 * to its friend(s) If it was written properly, this sharing action would NOT be
 	 * in a ticker behaviour and only a subgraph would be shared.
 	 * 
