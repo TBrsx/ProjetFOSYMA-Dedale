@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 
 public class BehavioursFSM extends FSMBehaviour {
@@ -10,21 +11,31 @@ public class BehavioursFSM extends FSMBehaviour {
 	public BehavioursFSM(ExploreCoopAgent ag) {
 		
 		// messageReceiver state
-		this.registerFirstState(new MsgReceiverBehaviour(ag), "msgReceiver");
+		Behaviour b = new MsgReceiverBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerFirstState(b, "msgReceiver");
 
 		// Explore state = 1 movement to explore.
-		this.registerState(new ExploreMoveBehaviour(ag), "exploreMoves");
+		b = new ExploreMoveBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "exploreMoves");
 
 		// shareMap state
-		this.registerState(new ShareMapBehaviour(ag,ag.getListAgentNames()), "shareMap");
+		b = new ShareMapBehaviour(ag,ag.getListAgentNames());
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "shareMap");
 		
 		// Interlocking state
-		this.registerState(new InterlockBehaviour(ag),"interlock");
+		b = new InterlockBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlock");
 
 		// Decision state, currently the only valid decision is to explore again.
 		
 		// End state, currently do nothing
-		this.registerLastState(new JobDoneBehaviour(ag), "jobDone");
+		b = new JobDoneBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerLastState(b, "jobDone");
 
 		// Transitions
 
