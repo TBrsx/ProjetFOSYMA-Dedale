@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
@@ -25,16 +26,13 @@ import javafx.application.Platform;
  * This simple topology representation only deals with the graph, not its content.</br>
  * The knowledge representation is not well written (at all), it is just given as a minimal example.</br>
  * The viewer methods are not independent of the data structure, and the dijkstra is recomputed every-time.
- * 
- * 
  */
 public class MapRepresentation implements Serializable {
 
 	/**
 	 * A node is open, closed, or agent, and has a claimedBy attribute which state which agent has claimed it
-	 * 
 	 */
-	
+
 
 	private static final long serialVersionUID = -1333959882640838272L;
 
@@ -42,10 +40,10 @@ public class MapRepresentation implements Serializable {
 	 * Parameters for graph rendering
 	 ********************************/
 
-	private String defaultNodeStyle= " node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
-	private String nodeStyle_open = " node.agent {"+"fill-color: forestgreen;"+"}";
-	private String nodeStyle_agent = " node.open {"+"fill-color: blue;"+"}";
-	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
+	private String defaultNodeStyle = " node {" + "fill-color: black;" + " size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
+	private String nodeStyle_open = " node.agent {" + "fill-color: forestgreen;" + "}";
+	private String nodeStyle_agent = " node.open {" + "fill-color: blue;" + "}";
+	private String nodeStyle = defaultNodeStyle + nodeStyle_agent + nodeStyle_open;
 
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
@@ -57,81 +55,85 @@ public class MapRepresentation implements Serializable {
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
 		System.setProperty("org.graphstream.ui", "javafx");
-		this.g= new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
 		Platform.runLater(() -> {
 			openGui();
 		});
 		//this.viewer = this.g.display();
 
-		this.nbEdges=0;
+		this.nbEdges = 0;
 	}
-	
-	
+
+
 	/**
 	 * Give the claimant of a node given its id
+	 *
 	 * @param id id of the node
 	 * @return The claimant of the given node, or null if this node doesn't exist in the map
 	 */
 	public synchronized String getNodeClaimant(String id) {
 		if (this.g.getNode(id) == null) {
 			return null;
-		}else {
+		} else {
 			return this.g.getNode(id).getAttribute("claimant").toString();
 		}
 	}
 
 	/**
-	 * Add or replace a node and its attribute 
+	 * Add or replace a node and its attribute
+	 *
 	 * @param id
 	 * @param mapAttribute
 	 */
-	public synchronized void addNode(String id,MapAttribute mapAttribute){
+	public synchronized void addNode(String id, MapAttribute mapAttribute) {
 		Node n;
-		if (this.g.getNode(id)==null){
-			n=this.g.addNode(id);
-		}else{
-			n=this.g.getNode(id);
+		if (this.g.getNode(id) == null) {
+			n = this.g.addNode(id);
+		} else {
+			n = this.g.getNode(id);
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.getState());
 		n.setAttribute("claimant", mapAttribute.getClaimant());
-		
+
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
-			n.setAttribute("ui.label",id);
-		}else {
-			n.setAttribute("ui.label",id+"    "+mapAttribute.getClaimant().substring(0, mapAttribute.getClaimant().length() - 5));
+			n.setAttribute("ui.label", id);
+		} else {
+			n.setAttribute("ui.label", id + "    " + mapAttribute.getClaimant().substring(0, mapAttribute.getClaimant().length() - 5));
 		}
-		
+
 	}
 
 	/**
 	 * Add a node to the graph. Do nothing if the node already exists.
 	 * If new, it is labeled as open (non-visited) and there is no claimant (empty string)
+	 *
 	 * @param id id of the node
 	 * @return true if added
 	 */
 	public synchronized boolean addNewNode(String id) {
-		if (this.g.getNode(id)==null){
-			MapAttribute mapAtt = new MapAttribute("open","");
-			addNode(id,mapAtt);
+		if (this.g.getNode(id) == null) {
+			MapAttribute mapAtt = new MapAttribute("open", "");
+			addNode(id, mapAtt);
 			return true;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Add a node to the graph, and add its claimant to its attribute. Do nothing if the node already exists.
 	 * If new, it is labeled as open (non-visited)
-	 * @param id id of the node
+	 *
+	 * @param id       id of the node
 	 * @param claimant name of the claimant
 	 * @return true if added
 	 */
-	public synchronized boolean addNewNode(String id,String claimant) {
-		if (this.g.getNode(id)==null){
-			MapAttribute mapAtt = new MapAttribute("open",claimant);
-			addNode(id,mapAtt);
+	public synchronized boolean addNewNode(String id, String claimant) {
+		if (this.g.getNode(id) == null) {
+			MapAttribute mapAtt = new MapAttribute("open", claimant);
+			addNode(id, mapAtt);
 			return true;
 		}
 		return false;
@@ -139,81 +141,80 @@ public class MapRepresentation implements Serializable {
 
 	/**
 	 * Add an undirect edge if not already existing.
+	 *
 	 * @param idNode1
 	 * @param idNode2
 	 */
-	public synchronized void addEdge(String idNode1,String idNode2){
+	public synchronized void addEdge(String idNode1, String idNode2) {
 		this.nbEdges++;
 		try {
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
-		}catch (IdAlreadyInUseException e1) {
+		} catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
-		}catch (EdgeRejectedException e2) {
+		} catch (EdgeRejectedException e2) {
 			this.nbEdges--;
-		} catch(ElementNotFoundException e3){
+		} catch (ElementNotFoundException e3) {
 
 		}
 	}
 
 	/**
 	 * Compute the shortest Path from idFrom to IdTo. The computation is currently not very efficient
-	 * 
-	 * 
+	 *
 	 * @param idFrom id of the origin node
-	 * @param idTo id of the destination node
+	 * @param idTo   id of the destination node
 	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
 	 */
-	public synchronized LinkedList<String> getShortestPath(String idFrom,String idTo){
-		LinkedList<String> shortestPath=new LinkedList<String>();
+	public synchronized LinkedList<String> getShortestPath(String idFrom, String idTo) {
+		LinkedList<String> shortestPath = new LinkedList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
 		dijkstra.init(g);
 		dijkstra.setSource(g.getNode(idFrom));
 		dijkstra.compute();//compute the distance to all nodes from idFrom
-		List<Node> path=dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
-		Iterator<Node> iter=path.iterator();
-		while (iter.hasNext()){
+		List<Node> path = dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
+		Iterator<Node> iter = path.iterator();
+		while (iter.hasNext()) {
 			shortestPath.add(iter.next().getId());
 		}
 		dijkstra.clear();
 		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
 			return null;
-		}else {
+		} else {
 			shortestPath.remove(0);//remove the current position
 		}
 		return shortestPath;
 	}
 
-	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition,String askName) {
+	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition, String askName) {
 		//1) Get all openNodes
-		List<String> opennodes=getOpenNodes(askName);
+		List<String> opennodes = getOpenNodes(askName);
 		//2) select the closest one that is
-		List<Couple<String,Integer>> lc=
+		List<Couple<String, Integer>> lc =
 				opennodes.stream()
-				.map(on -> (getShortestPath(myPosition,on)!=null)? new Couple<String, Integer>(on,getShortestPath(myPosition,on).size()): new Couple<String, Integer>(on,Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
-				.collect(Collectors.toList());
+						.map(on -> (getShortestPath(myPosition, on) != null) ? new Couple<String, Integer>(on, getShortestPath(myPosition, on).size()) : new Couple<String, Integer>(on, Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+						.collect(Collectors.toList());
 
-		Optional<Couple<String,Integer>> closest=lc.stream().min(Comparator.comparing(Couple::getRight));
+		Optional<Couple<String, Integer>> closest = lc.stream().min(Comparator.comparing(Couple::getRight));
 		//3) Compute shorterPath
 
-		return getShortestPath(myPosition,closest.get().getLeft());
+		return getShortestPath(myPosition, closest.get().getLeft());
 	}
 
 
-
-	public List<String> getOpenNodes(String askName){
+	public List<String> getOpenNodes(String askName) {
 		List<String> computedList = this.g.nodes()
-				.filter(x ->x .getAttribute("ui.class")=="open")
-				.filter(x->x .getAttribute("claimant").toString().equalsIgnoreCase(askName)
-					|| x .getAttribute("claimant").toString().equalsIgnoreCase(""))
+				.filter(x -> x.getAttribute("ui.class") == "open")
+				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName)
+						|| x.getAttribute("claimant").toString().equalsIgnoreCase(""))
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		if (computedList.isEmpty()) {
-			return this.g.nodes().filter(x ->x .getAttribute("ui.class")=="open")
-						.map(Node::getId)
-						.collect(Collectors.toList());
-		}else {
+			return this.g.nodes().filter(x -> x.getAttribute("ui.class") == "open")
+					.map(Node::getId)
+					.collect(Collectors.toList());
+		} else {
 			return computedList;
 		}
 	}
@@ -222,35 +223,35 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Before the migration we kill all non serializable components and store their data in a serializable form
 	 */
-	public void prepareMigration(){
+	public void prepareMigration() {
 		serializeGraphTopology();
 
 		closeGui();
 
-		this.g=null;
+		this.g = null;
 	}
 
 	/**
 	 * Before sending the agent knowledge of the map it should be serialized.
 	 */
 	private void serializeGraphTopology() {
-		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
-		while(iter.hasNext()){
-			Node n=iter.next();
-			sg.addNode(n.getId(),new MapAttribute(n.getAttribute("ui.class").toString(),n.getAttribute("claimant").toString()));
+		this.sg = new SerializableSimpleGraph<String, MapAttribute>();
+		Iterator<Node> iter = this.g.iterator();
+		while (iter.hasNext()) {
+			Node n = iter.next();
+			sg.addNode(n.getId(), new MapAttribute(n.getAttribute("ui.class").toString(), n.getAttribute("claimant").toString()));
 		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
-		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
+		Iterator<Edge> iterE = this.g.edges().iterator();
+		while (iterE.hasNext()) {
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
 			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}	
+		}
 	}
 
 
-	public synchronized SerializableSimpleGraph<String,MapAttribute> getSerializableGraph(){
+	public synchronized SerializableSimpleGraph<String, MapAttribute> getSerializableGraph() {
 		serializeGraphTopology();
 		return this.sg;
 	}
@@ -258,21 +259,21 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * After migration we load the serialized data and recreate the non serializable components (Gui,..)
 	 */
-	public synchronized void loadSavedData(){
+	public synchronized void loadSavedData() {
 
-		this.g= new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
 		openGui();
 
-		Integer nbEd=0;
-		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
+		Integer nbEd = 0;
+		for (SerializableNode<String, MapAttribute> n : this.sg.getAllNodes()) {
 			Node newNode = this.g.addNode(n.getNodeId());
 			newNode.setAttribute("ui.class", n.getNodeContent().getState());
 			newNode.setAttribute("claimant", n.getNodeContent().getClaimant());
-			addNode(n.getNodeId(),n.getNodeContent());
-			for(String s:this.sg.getEdges(n.getNodeId())){
-				this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
+			addNode(n.getNodeId(), n.getNodeContent());
+			for (String s : this.sg.getEdges(n.getNodeId())) {
+				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
 				nbEd++;
 			}
 		}
@@ -284,15 +285,15 @@ public class MapRepresentation implements Serializable {
 	 */
 	private synchronized void closeGui() {
 		//once the graph is saved, clear non serializable components
-		if (this.viewer!=null){
+		if (this.viewer != null) {
 			//Platform.runLater(() -> {
-			try{
+			try {
 				this.viewer.close();
-			}catch(NullPointerException e){
+			} catch (NullPointerException e) {
 				System.err.println("Bug graphstream viewer.close() work-around - https://github.com/graphstream/gs-core/issues/150");
 			}
 			//});
-			this.viewer=null;
+			this.viewer = null;
 		}
 	}
 
@@ -300,7 +301,7 @@ public class MapRepresentation implements Serializable {
 	 * Method called after a migration to reopen GUI components
 	 */
 	private synchronized void openGui() {
-		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);//GRAPH_IN_GUI_THREAD)
+		this.viewer = new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);//GRAPH_IN_GUI_THREAD)
 		viewer.enableAutoLayout();
 		viewer.setCloseFramePolicy(FxViewer.CloseFramePolicy.CLOSE_VIEWER);
 		viewer.addDefaultView(true);
@@ -310,44 +311,41 @@ public class MapRepresentation implements Serializable {
 
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
 
-		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
+		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			String claimclaim = n.getNodeContent().getClaimant();
 			//Add it (Reminder : does nothing if already in the map)
-			addNewNode(n.getNodeId(),claimclaim);
-			
+			addNewNode(n.getNodeId(), claimclaim);
+
 			//TODO : Always keep first agent as claimant in case of conflict, we need to change this
-			if ((((String) this.g.getNode(n.getNodeId()).getAttribute("claimant"))=="1stAgent" || n.getNodeContent().getClaimant()=="2ndAgent")
-					|| (((String) this.g.getNode(n.getNodeId()).getAttribute("claimant"))=="2ndAgent" || n.getNodeContent().getClaimant()=="1stAgent")) {
+			if ((((String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) == "1stAgent" || n.getNodeContent().getClaimant() == "2ndAgent")
+					|| (((String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) == "2ndAgent" || n.getNodeContent().getClaimant() == "1stAgent")) {
 				claimclaim = "1stAgent";
 			}
 
-			
+
 			//check its attribute. If I knew or just learned it was closed, it's now closed on my map.
-			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class"))=="closed" || n.getNodeContent().getState()=="closed") {
-				addNode(n.getNodeId(),new MapAttribute("closed",claimclaim));
+			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")) == "closed" || n.getNodeContent().getState() == "closed") {
+				addNode(n.getNodeId(), new MapAttribute("closed", claimclaim));
 			}
 		}
 
 		//4 now that all nodes are added, we can add edges
-		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
-			for(String s:sgreceived.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
+		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
+			for (String s : sgreceived.getEdges(n.getNodeId())) {
+				addEdge(n.getNodeId(), s);
 			}
 		}
 		//System.out.println("Merge done");
 	}
 
 	/**
-	 * 
-	 * @return true if there exist at least one openNode on the graph 
+	 * @return true if there exist at least one openNode on the graph
 	 */
 	public boolean hasOpenNode() {
 		return (this.g.nodes()
-				.filter(n -> n.getAttribute("ui.class")=="open")
+				.filter(n -> n.getAttribute("ui.class") == "open")
 				.findAny()).isPresent();
 	}
-
-
 
 
 }

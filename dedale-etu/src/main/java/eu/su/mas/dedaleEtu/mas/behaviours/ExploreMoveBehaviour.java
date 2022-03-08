@@ -17,6 +17,9 @@ import jade.core.behaviours.OneShotBehaviour;
 public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
+	private static final int INTERLOCKING = 0;
+	private static final int SUCCESS = 1;
+	private int returnCode = SUCCESS;
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -26,8 +29,6 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	/**
 	 * 
 	 * @param myagent
-	 * @param myMap      known map of the world the agent is living in
-	 * @param agentNames name of the agents to share the map with
 	 */
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent) {
 		super(myagent);
@@ -94,7 +95,10 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 							.getShortestPathToClosestOpenNode(myPosition, this.myAgent.getLocalName()).get(0);
 				}
 
-				((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
+
+				if (!((AbstractDedaleAgent) this.myAgent).moveTo(nextNode)) {
+					returnCode = INTERLOCKING;
+				};
 			}else {
 				System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
 			}
@@ -102,7 +106,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	}
 
 	public int onEnd() {
-		return 1;
+		return returnCode;
 	}
 
 }

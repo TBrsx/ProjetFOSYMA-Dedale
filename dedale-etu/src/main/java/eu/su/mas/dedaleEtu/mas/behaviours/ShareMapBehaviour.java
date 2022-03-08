@@ -23,11 +23,8 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 	 * The agent share its map. It blindly tries to send all its graph
 	 * to its friend(s) If it was written properly, this sharing action would NOT be
 	 * in a ticker behaviour and only a subgraph would be shared.
-	 * 
-	 * @param ag         the agent
-	 * @param receivers 
-	 * @param period    the periodicity of the behaviour (in ms)
-	 * @param mymap     (the map to share)
+	 *
+	 * @param ag        the agent
 	 * @param receivers the list of agents to send the map to
 	 */
 	public ShareMapBehaviour(ExploreCoopAgent ag, List<String> receivers) {
@@ -37,7 +34,7 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -568863390879327961L;
 

@@ -17,6 +17,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -7969469610241668140L;
 	private MapRepresentation myMap;
 	private List<String> listAgentNames = new ArrayList<String>();
+	private String nextPosition;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -74,5 +75,9 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	public List<String> getListAgentNames() {
 		return listAgentNames;
 	}
+
+	public void setNextPosition(String nextPosition) { this.nextPosition = nextPosition; }
+
+	public String getNextPosition() { return nextPosition; }
 
 }
