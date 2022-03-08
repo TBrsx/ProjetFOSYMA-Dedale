@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.agents;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -18,6 +19,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	private List<String> listAgentNames = new ArrayList<String>();
 	private String nextPosition;
+	private LinkedList<String> pathToFollow = new LinkedList<String>();
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -79,5 +81,13 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	public void setNextPosition(String nextPosition) { this.nextPosition = nextPosition; }
 
 	public String getNextPosition() { return nextPosition; }
+
+	public LinkedList<String> getPathToFollow() {
+		return pathToFollow;
+	}
+
+	public void setPathToFollow(LinkedList<String> pathToFollow) {
+		this.pathToFollow = pathToFollow;
+	}
 
 }

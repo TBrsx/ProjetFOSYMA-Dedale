@@ -8,27 +8,34 @@ public class BehavioursFSM extends FSMBehaviour {
 	private static final long serialVersionUID = 2728229558462751181L;
 
 	public BehavioursFSM(ExploreCoopAgent ag) {
-
-		// Explore state = 1 movement to explore. It's the first state.
-		this.registerFirstState(new ExploreMoveBehaviour(ag), "exploreMoves");
-
+		
 		// messageReceiver state
-		this.registerState(new MsgReceiverBehaviour(ag), "msgReceiver");
+		this.registerFirstState(new MsgReceiverBehaviour(ag), "msgReceiver");
+
+		// Explore state = 1 movement to explore.
+		this.registerState(new ExploreMoveBehaviour(ag), "exploreMoves");
 
 		// shareMap state
 		this.registerState(new ShareMapBehaviour(ag,ag.getListAgentNames()), "shareMap");
-
-		// Blocked state
+		
+		// Interlocking state
+		this.registerState(new InterlockBehaviour(ag),"interlock");
 
 		// Decision state, currently the only valid decision is to explore again.
+		
+		// End state, currently do nothing
+		this.registerLastState(new JobDoneBehaviour(ag), "jobDone");
 
 		// Transitions
 
-		this.registerTransition("exploreMoves", "msgReceiver", 1);
-
-		this.registerDefaultTransition("msgReceiver", "shareMap");
-
-		this.registerDefaultTransition("shareMap", "exploreMoves");
+		this.registerDefaultTransition("msgReceiver", "exploreMoves");
+		this.registerDefaultTransition("shareMap", "msgReceiver");
+		this.registerDefaultTransition("interlock", "msgReceiver");
+		
+		
+		this.registerTransition("exploreMoves", "shareMap",1);
+		this.registerTransition("exploreMoves", "interlock", 0);
+		this.registerTransition("exploreMoves", "jobDone", 2);
 	}
 
 }

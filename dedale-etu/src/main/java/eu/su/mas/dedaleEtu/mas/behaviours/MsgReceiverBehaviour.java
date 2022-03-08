@@ -47,32 +47,35 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 		if (msgReceived != null) {
 			returnCode = HANDSHAKE;
-		} else {
-			// Map sharing
-			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
-					MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-			msgReceived = this.myAgent.receive(msgTemplate);
-			if (msgReceived != null) {
-				returnCode = SHARE_TOPO;
-				SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
-				try {
-					sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-				} catch (UnreadableException e) {
-					e.printStackTrace();
-				}
-				this.agent.getMyMap().mergeMap(sgreceived);
-			} else {
-				// Interlocking
-				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
-						MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
-				msgReceived = this.myAgent.receive(msgTemplate);
-				returnCode = INTERLOCKING;
-			}
+			return;
 		}
-
+		// Map sharing
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+		msgReceived = this.myAgent.receive(msgTemplate);
+		if (msgReceived != null) {
+			returnCode = SHARE_TOPO;
+			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
+			try {
+				sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
+			this.agent.getMyMap().mergeMap(sgreceived);
+			return;
+			}
+		
+		// Interlocking
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+				MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+		msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
 			getDataStore().put("received-message", msgReceived);
+			returnCode = INTERLOCKING;
+			return;
 		}
+
+		
 	}
 
 	public int onEnd() {

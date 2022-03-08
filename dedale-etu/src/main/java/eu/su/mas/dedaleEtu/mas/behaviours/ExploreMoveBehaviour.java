@@ -13,13 +13,13 @@ import eu.su.mas.dedaleEtu.mas.behaviours.ExploreMoveBehaviour;
 
 import jade.core.behaviours.OneShotBehaviour;
 
-
 public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
 	private static final int INTERLOCKING = 0;
 	private static final int SUCCESS = 1;
-	private int returnCode = SUCCESS;
+	private static final int NO_OPEN_NODE = 2;
+	private int returnCode;
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -33,7 +33,6 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent) {
 		super(myagent);
 		this.myAgent = myagent;
-
 	}
 
 	@Override
@@ -82,31 +81,46 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				}
 			}
 
-			// 3) select next move, unless there is no openNodes left.
-			if(this.myAgent.getMyMap().hasOpenNode()) {
-				// If there exist one open node directly reachable, go for it, add it to
-				// the head of the path it wanted to take
-				// otherwise choose one from the openNode list, compute the shortestPath and go
-				// for it
-				if (nextNode == null) {
-					// no directly accessible openNode
-					// chose one, compute the path and take the first step.
-					nextNode = this.myAgent.getMyMap()
-							.getShortestPathToClosestOpenNode(myPosition, this.myAgent.getLocalName()).get(0);
-				}
+			// 3) select next move
 
+			// 3.1) If there exist one open node directly reachable, go for it, add the current position to
+			// the head of the path the agent wanted to take
+			if (nextNode != null) {
+				this.myAgent.getPathToFollow().addFirst(myPosition);
 
-				if (!((AbstractDedaleAgent) this.myAgent).moveTo(nextNode)) {
-					returnCode = INTERLOCKING;
-				};
-			}else {
+				// 3.2) Otherwise if he had a destination, follow the given path
+			} else if (this.myAgent.getPathToFollow().peekFirst() != null) {
+				nextNode = this.myAgent.getPathToFollow().removeFirst();
+
+				// 3.3) Otherwise choose the closest open node if there is one
+			} else if (this.myAgent.getMyMap().hasOpenNode()) {
+				// Compute the path and take the first step
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNode(myPosition,
+						this.myAgent.getLocalName()));
+				nextNode = this.myAgent.getPathToFollow().removeFirst();
+
+			} else {
+				// 3.4) If there is no open node, the exploration *should* be complete
 				System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
+				this.returnCode = NO_OPEN_NODE;
+			}
+			
+			//Move
+			if (nextNode != null) {
+				this.myAgent.setNextPosition(nextNode);
+				System.out.println(this.myAgent.getLocalName() + "- I'm at " + myPosition  +", going to " + this.myAgent.getNextPosition());
+				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
+					this.returnCode = INTERLOCKING;
+				}else {
+					this.returnCode = SUCCESS;
+				}
 			}
 		}
 	}
 
 	public int onEnd() {
-		return returnCode;
+		return this.returnCode;
 	}
 
 }
