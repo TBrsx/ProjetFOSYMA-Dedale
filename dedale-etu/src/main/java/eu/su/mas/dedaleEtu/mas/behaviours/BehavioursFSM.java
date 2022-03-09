@@ -25,10 +25,15 @@ public class BehavioursFSM extends FSMBehaviour {
 		b.setDataStore(this.getDataStore());
 		this.registerState(b, "shareMap");
 		
-		// Interlocking state
-		b = new InterlockBehaviour(ag);
+		// Interlocking state, emitter or receiver
+		b = new InterlockBehaviour(ag,false);
 		b.setDataStore(this.getDataStore());
-		this.registerState(b,"interlock");
+		this.registerState(b,"interlockEmitter");
+		
+		// Interlocking state
+		b = new InterlockBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlockReceiver");
 
 		// Decision state, currently the only valid decision is to explore again.
 		
@@ -43,9 +48,9 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerDefaultTransition("shareMap", "msgReceiver");
 		this.registerDefaultTransition("interlock", "msgReceiver");
 		
-		
+		this.registerTransition("msgReceiver", "interlockReceiver", 2);
+		this.registerTransition("exploreMoves", "interlockEmitter", 0);
 		this.registerTransition("exploreMoves", "shareMap",1);
-		this.registerTransition("exploreMoves", "interlock", 0);
 		this.registerTransition("exploreMoves", "jobDone", 2);
 	}
 
