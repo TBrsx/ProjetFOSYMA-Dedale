@@ -2,12 +2,18 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
+
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 
 import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.OtherAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploreMoveBehaviour;
 
@@ -45,7 +51,11 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 		// 0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
 		// If it's a new node we add it, otherwise do nothing
-		this.myAgent.getMyMap().addNewNode(myPosition, this.myAgent.getLocalName());
+		Node added = this.myAgent.getMyMap().addNewNode(myPosition, this.myAgent.getLocalName());
+		if (added != null) {
+			this.myAgent.addNodeOtherAgents(added);
+			added = null;
+			}
 
 		if (myPosition != null) {
 			// List of observable from the agent's current position
@@ -64,19 +74,27 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			if (!this.myAgent.getMyMap().getNodeClaimant(myPosition).equalsIgnoreCase("")) {
 				claimant = this.myAgent.getMyMap().getNodeClaimant(myPosition);
 			}
-			this.myAgent.getMyMap().addNode(myPosition, new MapAttribute("closed", claimant));
-
+			added = this.myAgent.getMyMap().addNode(myPosition, new MapAttribute("closed", claimant));
+			if (added != null) {
+				this.myAgent.addNodeOtherAgents(added);
+				added = null;
+			}
+			
 			// 2) get the surrounding nodes and, if not in closedNodes, add them to open
 			// nodes + claim them.
 			String nextNode = null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
 			while (iter.hasNext()) {
 				String nodeId = iter.next().getLeft();
-				boolean isNewNode = this.myAgent.getMyMap().addNewNode(nodeId, this.myAgent.getLocalName());
+				added = this.myAgent.getMyMap().addNewNode(nodeId, this.myAgent.getLocalName());
+				if (added != null) {
+					this.myAgent.addNodeOtherAgents(added);
+				}
 				// the node may exist, but not necessarily the edge
 				if (myPosition != nodeId) {
-					this.myAgent.getMyMap().addEdge(myPosition, nodeId);
-					if (nextNode == null && isNewNode)
+					Edge addedE = this.myAgent.getMyMap().addEdge(myPosition, nodeId);
+					this.myAgent.addEdgeOtherAgents(addedE);
+					if (nextNode == null && added != null)
 						nextNode = nodeId;
 				}
 			}

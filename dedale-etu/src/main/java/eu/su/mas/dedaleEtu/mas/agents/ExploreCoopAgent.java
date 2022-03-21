@@ -1,15 +1,21 @@
 package eu.su.mas.dedaleEtu.mas.agents;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 
 import eu.su.mas.dedaleEtu.mas.behaviours.BehavioursFSM;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.OtherAgent;
 
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
 import jade.core.behaviours.Behaviour;
 
 
@@ -20,6 +26,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private List<String> listAgentNames = new ArrayList<String>();
 	private String nextPosition;
 	private LinkedList<String> pathToFollow = new LinkedList<String>();
+	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -42,6 +49,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 						// release.
 			while (i < args.length) {
 				this.getListAgentNames().add((String) args[i]);
+				this.otherAgents.put((String) args[i],new OtherAgent((String) args[i]));
 				i++;
 			}
 		}
@@ -89,5 +97,35 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	public void setPathToFollow(LinkedList<String> pathToFollow) {
 		this.pathToFollow = pathToFollow;
 	}
+
+	public HashMap<String,OtherAgent> getOtherAgents() {
+		return this.otherAgents;
+	}
+
+	public void setOtherAgents(HashMap<String,OtherAgent> otherAgents) {
+		this.otherAgents = otherAgents;
+	}
+	
+	//Add a node to the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents
+	public void addNodeOtherAgents(Node n) {
+		
+		Iterator<Map.Entry<String, OtherAgent>> entries = this.getOtherAgents().entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry<String, OtherAgent> entry = entries.next();
+			OtherAgent agent =  entry.getValue();
+			agent.addNode(n);
+		}
+	}
+	
+	//Add an edge the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents
+		public void addEdgeOtherAgents(Edge e) {
+			
+			Iterator<Map.Entry<String, OtherAgent>> entries = this.getOtherAgents().entrySet().iterator();
+			while (entries.hasNext()) {
+				Map.Entry<String, OtherAgent> entry = entries.next();
+				OtherAgent agent =  entry.getValue();
+				agent.addEdge(e);
+			}
+		}
 
 }

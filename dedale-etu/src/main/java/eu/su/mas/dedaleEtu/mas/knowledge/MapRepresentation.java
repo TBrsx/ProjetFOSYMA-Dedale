@@ -84,7 +84,7 @@ public class MapRepresentation implements Serializable {
 	 * @param id
 	 * @param mapAttribute
 	 */
-	public synchronized void addNode(String id, MapAttribute mapAttribute) {
+	public synchronized Node addNode(String id, MapAttribute mapAttribute) {
 		Node n;
 		if (this.g.getNode(id) == null) {
 			n = this.g.addNode(id);
@@ -100,7 +100,7 @@ public class MapRepresentation implements Serializable {
 		} else {
 			n.setAttribute("ui.label", id + "    " + mapAttribute.getClaimant().substring(0, mapAttribute.getClaimant().length() - 5));
 		}
-
+		return n;
 	}
 
 	/**
@@ -110,13 +110,13 @@ public class MapRepresentation implements Serializable {
 	 * @param id id of the node
 	 * @return true if added
 	 */
-	public synchronized boolean addNewNode(String id) {
+	public synchronized Node addNewNode(String id) {
 		if (this.g.getNode(id) == null) {
 			MapAttribute mapAtt = new MapAttribute("open", "");
-			addNode(id, mapAtt);
-			return true;
+			Node added = addNode(id, mapAtt);
+			return added;
 		}
-		return false;
+		return null;
 	}
 
 	/**
@@ -125,15 +125,15 @@ public class MapRepresentation implements Serializable {
 	 *
 	 * @param id       id of the node
 	 * @param claimant name of the claimant
-	 * @return true if added
+	 * @return added node if added, else null
 	 */
-	public synchronized boolean addNewNode(String id, String claimant) {
+	public synchronized Node addNewNode(String id, String claimant) {
 		if (this.g.getNode(id) == null) {
 			MapAttribute mapAtt = new MapAttribute("open", claimant);
-			addNode(id, mapAtt);
-			return true;
+			Node added = addNode(id, mapAtt);
+			return added;
 		}
-		return false;
+		return null;
 	}
 
 	/**
@@ -141,11 +141,13 @@ public class MapRepresentation implements Serializable {
 	 *
 	 * @param idNode1
 	 * @param idNode2
+	 * @return tje added edge
 	 */
-	public synchronized void addEdge(String idNode1, String idNode2) {
+	public synchronized Edge addEdge(String idNode1, String idNode2) {
+		Edge e = null;
 		this.nbEdges++;
 		try {
-			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
+			e = this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
 		} catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
@@ -154,6 +156,7 @@ public class MapRepresentation implements Serializable {
 		} catch (ElementNotFoundException e3) {
 
 		}
+		return e;
 	}
 
 	/**

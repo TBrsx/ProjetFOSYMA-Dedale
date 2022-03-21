@@ -18,11 +18,11 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	private int returnCode = NO_MSG;
 
-	ExploreCoopAgent agent;
+	ExploreCoopAgent myAgent;
 
 	public MsgReceiverBehaviour(ExploreCoopAgent ag) {
 		super(ag);
-		this.agent = ag;
+		this.myAgent = ag;
 	}
 
 	public void action() {
@@ -33,7 +33,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
-			// TODO : Mettre à jour les connaissances sur les positions
+			this.myAgent.getOtherAgents().get(msgReceived.getSender().getLocalName()).setLastKnownPosition(msgReceived.getContent());;
 		}
 
 		// ==== Messages that calls for a change of state====
@@ -61,7 +61,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
-			this.agent.getMyMap().mergeMap(sgreceived);
+			this.myAgent.getMyMap().mergeMap(sgreceived);
 			return;
 			}
 		

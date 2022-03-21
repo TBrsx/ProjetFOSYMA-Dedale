@@ -21,15 +21,24 @@ public class OtherAgent {
 		this.setNodesToTransfer(new LinkedList<Node>());
 		this.setEdgesToTransfer(new LinkedList<Edge>());
 	}
-	
-	//Suffisantes, ou faut modifier aussi ?
-	
-	public void addNode(Node n) {
-		
+	public OtherAgent(String name,String position){
+		this.setName(name);
+		this.setLastKnownPosition(position);
+		this.setNodesToTransfer(new LinkedList<Node>());
+		this.setEdgesToTransfer(new LinkedList<Edge>());
 	}
 	
-	public void addEdge(Node n) {
-		
+	
+	//Add a node to the nodesToTransfer list, updating it if it already exists
+	public void addNode(Node n) {
+		this.nodesToTransfer.remove(n);
+		this.nodesToTransfer.add(n);
+	}
+	
+	//Add an edge to the edgesToTransfer list, updating it if it already exists
+	public void addEdge(Edge e) {
+		this.edgesToTransfer.remove(e);
+		this.edgesToTransfer.add(e);
 	}
 
 	public String getName() {
