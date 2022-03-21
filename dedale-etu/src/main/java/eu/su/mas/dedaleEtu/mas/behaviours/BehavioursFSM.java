@@ -19,11 +19,6 @@ public class BehavioursFSM extends FSMBehaviour {
 		b = new ExploreMoveBehaviour(ag);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b, "exploreMoves");
-
-		// shareMap state
-		b = new ShareMapBehaviour(ag,ag.getListAgentNames());
-		b.setDataStore(this.getDataStore());
-		this.registerState(b, "shareMap");
 		
 		// Interlocking state, emitter or receiver
 		b = new InterlockBehaviour(ag,false);
@@ -37,11 +32,11 @@ public class BehavioursFSM extends FSMBehaviour {
 		//Information sharing state
 		b = new InformationSharingBehaviour(ag,false);
 		b.setDataStore(this.getDataStore());
-		this.registerState(b, "infosharingEmitter");
+		this.registerState(b, "infoSharingEmitter");
 		
 		b = new InformationSharingBehaviour(ag,true);
 		b.setDataStore(this.getDataStore());
-		this.registerState(b, "infosharingReceiver");
+		this.registerState(b, "infoSharingReceiver");
 
 		// Decision state, currently the only valid decision is to explore again.
 		
@@ -52,13 +47,15 @@ public class BehavioursFSM extends FSMBehaviour {
 
 		// Transitions
 
-		this.registerDefaultTransition("msgReceiver", "exploreMoves");
-		this.registerDefaultTransition("shareMap", "msgReceiver");
+		this.registerDefaultTransition("exploreMoves", "msgReceiver");
+		this.registerDefaultTransition("msgReceiver", "infoSharingEmitter");
+		this.registerDefaultTransition("infoSharingEmitter", "exploreMoves");
+		this.registerDefaultTransition("infoSharingReceiver", "exploreMoves");
 		this.registerDefaultTransition("interlock", "msgReceiver");
 		
+		this.registerTransition("msgReceiver", "infoSharingReceiver", 3);
 		this.registerTransition("msgReceiver", "interlockReceiver", 2);
 		this.registerTransition("exploreMoves", "interlockEmitter", 0);
-		this.registerTransition("exploreMoves", "shareMap",1);
 		this.registerTransition("exploreMoves", "jobDone", 2);
 	}
 

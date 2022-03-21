@@ -80,6 +80,7 @@ public class OtherAgent implements Serializable{
 		this.edgesToTransfer = edgesToTransfer;
 	}
 	
+	//Serialize informations we want to send to the other agent
 	public SerializableSimpleGraph<String, MapAttribute> serializeInformations() {
 		SerializableSimpleGraph<String, MapAttribute> sg = new SerializableSimpleGraph<String, MapAttribute>();
 		Iterator<Node> iter = this.nodesToTransfer.iterator();

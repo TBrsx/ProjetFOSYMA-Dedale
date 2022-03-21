@@ -14,7 +14,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	private static final int NO_MSG = 0;
 	private static final int SHARE_TOPO = 1;
 	private static final int INTERLOCKING = 2;
-	private static final int HANDSHAKE = 3;
+	private static final int INFOSHARE = 3;
 
 	private int returnCode = NO_MSG;
 
@@ -47,24 +47,9 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 		if (msgReceived != null) {
 			getDataStore().put("received-message", msgReceived);
-			returnCode = HANDSHAKE;
+			this.returnCode = INFOSHARE;
 			return;
 		}
-		// Map sharing
-		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-TOPO"),
-				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		msgReceived = this.myAgent.receive(msgTemplate);
-		if (msgReceived != null) {
-			returnCode = SHARE_TOPO;
-			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
-			try {
-				sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-			} catch (UnreadableException e) {
-				e.printStackTrace();
-			}
-			this.myAgent.getMyMap().mergeMap(sgreceived);
-			return;
-			}
 		
 		// Interlocking
 		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
@@ -72,15 +57,18 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 		msgReceived = this.myAgent.receive(msgTemplate);
 		if (msgReceived != null) {
 			getDataStore().put("received-message", msgReceived);
-			returnCode = INTERLOCKING;
+			this.returnCode = INTERLOCKING;
 			return;
 		}
-
+		
+		if (msgReceived == null) {
+			this.returnCode = NO_MSG;
+		}
 		
 	}
 
 	public int onEnd() {
-		return returnCode;
+		return this.returnCode;
 	}
 
 }
