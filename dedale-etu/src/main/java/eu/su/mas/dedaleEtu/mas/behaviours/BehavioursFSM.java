@@ -30,10 +30,18 @@ public class BehavioursFSM extends FSMBehaviour {
 		b.setDataStore(this.getDataStore());
 		this.registerState(b,"interlockEmitter");
 		
-		// Interlocking state
 		b = new InterlockBehaviour(ag,true);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b,"interlockReceiver");
+		
+		//Information sharing state
+		b = new InformationSharingBehaviour(ag,false);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "infosharingEmitter");
+		
+		b = new InformationSharingBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "infosharingReceiver");
 
 		// Decision state, currently the only valid decision is to explore again.
 		

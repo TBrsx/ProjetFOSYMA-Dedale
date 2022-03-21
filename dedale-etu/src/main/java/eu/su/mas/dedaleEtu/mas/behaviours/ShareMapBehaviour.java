@@ -40,10 +40,7 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		// The agent blindly send all its graph to its surrounding
-		// to illustrate how to share its knowledge (the topology currently) with the
-		// the others agents.
-
+		
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("SHARE-TOPO");
 		msg.setSender(this.myAgent.getAID());

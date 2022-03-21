@@ -99,4 +99,8 @@ public class OtherAgent implements Serializable{
 		this.nodesToTransfer.clear();
 		return sg;
 	}
+	
+	public boolean hasInfoToShare() {
+		return !((this.edgesToTransfer.isEmpty())||this.nodesToTransfer.isEmpty());
+	}
 }

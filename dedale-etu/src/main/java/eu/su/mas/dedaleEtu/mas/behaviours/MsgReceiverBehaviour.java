@@ -41,11 +41,12 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 		msgReceived = null;
 
 		// Handshake try
-		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("HANDSHAKE"),
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INFOSHARE"),
 				MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
 		msgReceived = this.myAgent.receive(msgTemplate);
 
 		if (msgReceived != null) {
+			getDataStore().put("received-message", msgReceived);
 			returnCode = HANDSHAKE;
 			return;
 		}
