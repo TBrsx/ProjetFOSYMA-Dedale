@@ -93,7 +93,12 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				// the node may exist, but not necessarily the edge
 				if (myPosition != nodeId) {
 					Edge addedE = this.myAgent.getMyMap().addEdge(myPosition, nodeId);
-					this.myAgent.addEdgeOtherAgents(addedE);
+					if (addedE != null) {
+						this.myAgent.addEdgeOtherAgents(addedE);
+						this.myAgent.addNodeOtherAgents(addedE.getNode0());
+						this.myAgent.addNodeOtherAgents(addedE.getNode1());
+						
+					}
 					if (nextNode == null && added != null)
 						nextNode = nodeId;
 				}
@@ -127,6 +132,14 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			if (nextNode != null) {
 				this.myAgent.setNextPosition(nextNode);
 				//System.out.println(this.myAgent.getLocalName() + "- I'm at " + myPosition  +", going to " + this.myAgent.getNextPosition());
+				Iterator<Map.Entry<String, OtherAgent>> entries = this.myAgent.getOtherAgents().entrySet().iterator();
+				while (entries.hasNext()) {
+					Map.Entry<String, OtherAgent> entry = entries.next();
+					OtherAgent agent =  entry.getValue();
+					System.out.println(this.myAgent.getLocalName() + "- Nodes to share " + agent.getNodesToTransfer().toString());
+					System.out.println(this.myAgent.getLocalName() + "- Edges to share " + agent.getEdgesToTransfer().toString());
+				}
+				
 				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
 					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
 					this.returnCode = INTERLOCKING;

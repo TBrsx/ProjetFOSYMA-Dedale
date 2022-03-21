@@ -1,15 +1,22 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
+import java.io.Serializable;
+import java.util.Iterator;
 import java.util.LinkedList;
-import org.graphstream.graph.Graph;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
+
+
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 
 
 
 //This class is the knowledge an agent has about other agents - mainly, the informations he thinks that the other agent doesn't know
 //It needs to be updated each time the agent learns something new 
-public class OtherAgent {
+public class OtherAgent implements Serializable{
+	
+	private static final long serialVersionUID = -2214875361759942206L;
+	
 	private String name;
 	private String lastKnownPosition;
 	private LinkedList<Node> nodesToTransfer;
@@ -71,5 +78,25 @@ public class OtherAgent {
 
 	public void setEdgesToTransfer(LinkedList<Edge> edgesToTransfer) {
 		this.edgesToTransfer = edgesToTransfer;
+	}
+	
+	public SerializableSimpleGraph<String, MapAttribute> serializeInformations() {
+		SerializableSimpleGraph<String, MapAttribute> sg = new SerializableSimpleGraph<String, MapAttribute>();
+		Iterator<Node> iter = this.nodesToTransfer.iterator();
+		while (iter.hasNext()) {
+			Node n = iter.next();
+			sg.addNode(n.getId(), new MapAttribute(n.getAttribute("ui.class").toString(), n.getAttribute("claimant").toString()));
+		}
+		Iterator<Edge> iterE = this.edgesToTransfer.iterator();
+		while (iterE.hasNext()) {
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
+			sg.addEdge(e.getId(), sn.getId(), tn.getId());
+		}
+		//After sending the informations, we can clear
+		this.edgesToTransfer.clear();
+		this.nodesToTransfer.clear();
+		return sg;
 	}
 }

@@ -50,15 +50,15 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 		for (String agentName : receivers) {
 			msg.addReceiver(new AID(agentName, AID.ISLOCALNAME));
 		}
-
-		SerializableSimpleGraph<String, MapAttribute> sg = this.myAgent.getMyMap().getSerializableGraph();
-		try {
-			msg.setContentObject(sg);
-		} catch (IOException e) {
-			e.printStackTrace();
+		for(String agent : this.receivers) {
+			SerializableSimpleGraph<String, MapAttribute> sg = this.myAgent.getOtherAgents().get(agent).serializeInformations();
+			try {
+				msg.setContentObject(sg);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
 		}
-		((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
-
 	}
 
 }

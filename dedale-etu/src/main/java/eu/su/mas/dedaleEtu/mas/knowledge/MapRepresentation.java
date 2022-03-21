@@ -141,7 +141,7 @@ public class MapRepresentation implements Serializable {
 	 *
 	 * @param idNode1
 	 * @param idNode2
-	 * @return tje added edge
+	 * @return the added edge
 	 */
 	public synchronized Edge addEdge(String idNode1, String idNode2) {
 		Edge e = null;
