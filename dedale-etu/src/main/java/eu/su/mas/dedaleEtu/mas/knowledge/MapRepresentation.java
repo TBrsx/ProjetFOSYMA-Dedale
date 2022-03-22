@@ -17,6 +17,8 @@ import org.graphstream.ui.fx_viewer.FxViewer;
 import org.graphstream.ui.view.Viewer;
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import javafx.application.Platform;
 
 /**
@@ -308,31 +310,49 @@ public class MapRepresentation implements Serializable {
 
 		g.display();
 	}
+	
+	public String settleClaims(ExploreCoopAgent agent,String sender,String claimant1,String claimant2) {
+		String trueClaimant = agent.getLocalName();
+		//One of the claimant is an external agent, he keeps the claim
+		//If claimant1 AND claimant2 are external agents, we arbitrarily choose the first one (Not very important);
+		if ((!claimant1.equals(agent.getLocalName())) && (!claimant1.equals(sender))) {
+			trueClaimant = claimant1;
+		}else if(((!claimant2.equals(agent.getLocalName())) && (!claimant2.equals(sender)))) {
+			trueClaimant = claimant2;
+		}else { //The claimants are agent and sender, agent let the sender keep it
+			trueClaimant = sender;
+		}
+		return trueClaimant;
+	}
 
-	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
+	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			String claimclaim = n.getNodeContent().getClaimant();
 			//Add it (Reminder : does nothing if already in the map)
-			addNewNode(n.getNodeId(), claimclaim);
+			Node nodeAdded = null;
+			nodeAdded = addNewNode(n.getNodeId(), claimclaim);
 
-			//TODO : Always keep first agent as claimant in case of conflict, we need to change this
-			if ((((String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) == "1stAgent" || n.getNodeContent().getClaimant() == "2ndAgent")
-					|| (((String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) == "2ndAgent" || n.getNodeContent().getClaimant() == "1stAgent")) {
-				claimclaim = "1stAgent";
+			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) != n.getNodeContent().getClaimant()){
+				claimclaim = this.settleClaims(agent, sender, (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
+				nodeAdded = addNode(n.getNodeId(), new MapAttribute((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class"), claimclaim));
 			}
 
 
 			//check its attribute. If I knew or just learned it was closed, it's now closed on my map.
 			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")) == "closed" || n.getNodeContent().getState() == "closed") {
-				addNode(n.getNodeId(), new MapAttribute("closed", claimclaim));
+				nodeAdded = addNode(n.getNodeId(), new MapAttribute("closed", claimclaim));
 			}
+			agent.addNodeOtherAgents(nodeAdded);
 		}
 
-		//4 now that all nodes are added, we can add edges
+		//now that all nodes are added, we can add edges
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			for (String s : sgreceived.getEdges(n.getNodeId())) {
-				addEdge(n.getNodeId(), s);
+				Edge e = addEdge(n.getNodeId(), s);
+				if (e!= null) {
+					agent.addEdgeOtherAgents(e);
+				}
 			}
 		}
 		//System.out.println("Merge done");

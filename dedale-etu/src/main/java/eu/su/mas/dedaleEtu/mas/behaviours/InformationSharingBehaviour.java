@@ -107,7 +107,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
-			this.myAgent.getMyMap().mergeMap(sgreceived);
+			this.myAgent.getMyMap().mergeMap(sgreceived,this.myAgent,msgReceived.getSender().getLocalName());
 			}
 	}
 
