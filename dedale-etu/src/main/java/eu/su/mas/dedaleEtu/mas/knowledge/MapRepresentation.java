@@ -328,20 +328,22 @@ public class MapRepresentation implements Serializable {
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
-			String claimclaim = n.getNodeContent().getClaimant();
+			String claimant = n.getNodeContent().getClaimant();
 			//Add it (Reminder : does nothing if already in the map)
 			Node nodeAdded = null;
-			nodeAdded = addNewNode(n.getNodeId(), claimclaim);
-
+			nodeAdded = addNewNode(n.getNodeId(), claimant);
+			
+			//If there is a claimant clash
 			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) != n.getNodeContent().getClaimant()){
-				claimclaim = this.settleClaims(agent, sender, (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
-				nodeAdded = addNode(n.getNodeId(), new MapAttribute((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class"), claimclaim));
+				claimant = this.settleClaims(agent, sender, (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
 			}
 
 
-			//check its attribute. If I knew or just learned it was closed, it's now closed on my map.
+			//check its attribute. If I knew or just learned it was closed, it's now closed on my map. Otherwise it's open.
 			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")) == "closed" || n.getNodeContent().getState() == "closed") {
-				nodeAdded = addNode(n.getNodeId(), new MapAttribute("closed", claimclaim));
+				nodeAdded = addNode(n.getNodeId(), new MapAttribute("closed", claimant));
+			}else {
+				nodeAdded = addNode(n.getNodeId(), new MapAttribute("open", claimant));
 			}
 			agent.addNodeOtherAgents(nodeAdded);
 		}
