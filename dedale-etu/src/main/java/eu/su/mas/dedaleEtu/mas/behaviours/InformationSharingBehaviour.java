@@ -35,9 +35,12 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		int waitCounts = 0;
 		while (msgReceived == null && waitCounts <5) {
+			if (waitCounts == 0){
+				System.out.println(this.myAgent.getLocalName() + " - Waiting for message... ");
+
+			}
 			waitCounts++;
 			this.myAgent.doWait(timer);
-			System.out.println(this.myAgent.getLocalName() + " - Waiting for message... ");
 			msgReceived = this.myAgent.receive(msgTemplate);
 		}
 		return msgReceived;
