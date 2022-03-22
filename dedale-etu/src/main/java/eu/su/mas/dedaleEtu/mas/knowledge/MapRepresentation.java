@@ -3,7 +3,6 @@ package eu.su.mas.dedaleEtu.mas.knowledge;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -385,13 +384,13 @@ public class MapRepresentation implements Serializable {
 	public LinkedList<String> getNearestFork(String prevNode, String currentNode) {
 		LinkedList<String> path = new LinkedList<>();
 		List<String> neighboringNodes = getNextNeighboringNodes(currentNode, prevNode);
-		while (neighboringNodes.size() == 2) {
+		while (neighboringNodes.size() == 1) {
 			prevNode = currentNode;
 			currentNode = neighboringNodes.get(0);
 			path.add(currentNode);
 			neighboringNodes = getNextNeighboringNodes(currentNode, prevNode);
 		}
-		if (neighboringNodes.size() < 2) {
+		if (neighboringNodes.size() < 1) {
 			return new LinkedList<>();
 		} else {
 			Random rand = new Random();

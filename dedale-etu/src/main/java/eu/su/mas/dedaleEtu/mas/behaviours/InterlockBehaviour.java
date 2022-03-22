@@ -1,19 +1,22 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.util.leap.Set;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class InterlockBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = -5610039770213100761L;
 	private final ExploreCoopAgent myAgent;
-	private final String receiver;
-	private final boolean isReceiver;
+	private String receiver;
+	private boolean isReceiver;
 
 	/**
 	 * The agent and receiver debates about which agent as to move backward
@@ -28,17 +31,31 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		this.isReceiver = isReceiver;
 	}
 
-	private ACLMessage waitForMessage(MessageTemplate msgTemplate, int timer) {
+	private ACLMessage waitForMessage(MessageTemplate msgTemplate, boolean doTimeout) {
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-		while (msgReceived == null) {
-			this.myAgent.doWait(timer);
+		int cpt = 0;
+		while (msgReceived == null && (cpt < 2 || !doTimeout)) {
+			this.myAgent.doWait(2000);
 			msgReceived = this.myAgent.receive(msgTemplate);
+			if (doTimeout)
+				cpt++;
+		}
+		if (cpt >= 2 && doTimeout) {
+			return null;
 		}
 		return msgReceived;
 	}
 
-	private ACLMessage setupMessage(ACLMessage msg, String protocol, String content) {
-		msg.setProtocol(protocol);
+	private LinkedList<String> reverse(LinkedList<String> list) {
+		LinkedList<String> newList = new LinkedList<>();
+		list.forEach(
+				newList::addFirst
+		);
+		return newList;
+	}
+
+	private ACLMessage setupMessage(ACLMessage msg, String content) {
+		msg.setProtocol("INTERLOCKING");
 		msg.setSender(this.myAgent.getAID());
 		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
 		if (content != null) {
@@ -49,50 +66,124 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		System.out.println(this.myAgent.getLocalName() + " enters interlocking state");
+		System.out.println(this.myAgent.getLocalName() + " current node is " + this.myAgent.getCurrentPosition() + " and next node is " + this.myAgent.getNextPosition() + ".");
+
+		// Override potential error in selection of sender/receiver
+		// Not optimal
+		boolean needsFix = false;
+		ACLMessage bandage = this.myAgent.receive(MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+				MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF)));
+		if (bandage != null) {
+			this.isReceiver = true;
+			needsFix = true;
+		}
 		if (isReceiver) {
-			// Wait for query-if from the sender
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
-					MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
-			ACLMessage msgReceived = waitForMessage(msgTemplate, 500);
+			System.out.println(this.myAgent.getLocalName() + " is the receiver.");
+			String[] data;
+			if (needsFix) {
+				data = bandage.getContent().split(",");
+				this.receiver = bandage.getSender().getLocalName();
+			} else {
+				ACLMessage msgReceived = (ACLMessage) this.getDataStore().get("received-message");
+				if (msgReceived == null) {
+					return;
+				}
+				data = msgReceived.getContent().split(",");
+				this.receiver = msgReceived.getSender().getLocalName();
+			}
 
 			// Send confirm message to the sender if the agents are interlocking,
 			// send disconfirm message else
+			System.out.println(this.myAgent.getLocalName() + " loaded the sender message from its DataStore.");
 			ACLMessage msg;
-			boolean isInterlocking = msgReceived.getContent().equals(this.myAgent.getNextPosition());
+			boolean isInterlocking = data[0].equals(this.myAgent.getNextPosition()) && data[1].equals(this.myAgent.getCurrentPosition());
 			if (isInterlocking) {
-				msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), "INTERLOCKING", null);
+				msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), null);
+				System.out.println(this.myAgent.getLocalName() + " is indeed interlocked.");
 			} else {
-				msg = setupMessage(new ACLMessage(ACLMessage.DISCONFIRM), "INTERLOCKING", null);
+				msg = setupMessage(new ACLMessage(ACLMessage.DISCONFIRM), null);
+				System.out.println(this.myAgent.getLocalName() + " isn't interlocked.");
 			}
-			this.myAgent.sendMessage(msg);
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+			System.out.println(this.myAgent.getLocalName() + " sent its reply.");
 			if (!isInterlocking) {
 				return;
 			}
 		} else {
-			ACLMessage msg = setupMessage(new ACLMessage(ACLMessage.QUERY_IF),
-					"INTERLOCKING", this.myAgent.getCurrentPosition());
-			this.myAgent.sendMessage(msg);
+			// Ping agents around
+			List<String> otherAgents = this.myAgent.getListAgentNames();
+			System.out.println(this.myAgent.getLocalName() + " is the sender.");
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+			msg.setProtocol("INTERLOCKING");
+			msg.setSender(this.myAgent.getAID());
+			for (String name : otherAgents) {
+				msg.addReceiver(new AID(name, AID.ISLOCALNAME));
+			}
+			msg.setContent(this.myAgent.getCurrentPosition() + "," + this.myAgent.getNextPosition());
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+
+			System.out.println(this.myAgent.getLocalName() + " asked if " + otherAgents + " is/are interlocking.");
 
 			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
 					MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
 							MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)));
-			msg = waitForMessage(msgTemplate, 500);
-			if (msg.getPerformative() == ACLMessage.DISCONFIRM) {
+			msg = waitForMessage(msgTemplate, true);
+			if (msg == null) {
 				return;
 			}
+			this.receiver = msg.getSender().getLocalName();
+			System.out.println(this.myAgent.getLocalName() + " got its reply.");
+			if (msg.getPerformative() == ACLMessage.DISCONFIRM) {
+				System.out.println(this.myAgent.getLocalName() + " knows that " + this.receiver + " wasn't interlocking.");
+				return;
+			}
+			System.out.println(this.myAgent.getLocalName() + " knows that " + this.receiver + " is interlocked.");
 		}
+
+		System.out.println(this.myAgent.getLocalName() + " is computing its backtracking path.");
 		LinkedList<String> path = this.myAgent.getMyMap()
 				.getNearestFork(this.myAgent.getNextPosition(), this.myAgent.getCurrentPosition());
-		String content = path.size() == 0 ? "inf" : Integer.toString(path.size());
-		ACLMessage msg = setupMessage(new ACLMessage(ACLMessage.INFORM), "INTERLOCK", content);
-		this.myAgent.sendMessage(msg);
+		System.out.println(this.myAgent.getLocalName() + " backtracking path is " + path.toString() + ".");
+		String content = path.size() == 0 ? Integer.toString(Integer.MAX_VALUE) : Integer.toString(path.size());
+		System.out.println(this.myAgent.getLocalName() + " backtracking path's length is " + content + ".");
+		ACLMessage msg = setupMessage(new ACLMessage(ACLMessage.INFORM), content);
+		((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		ACLMessage msgReceived = waitForMessage(msgTemplate, 500);
-		if (Integer.parseInt(msgReceived.getContent().toString()) < path.size()) {
-			// continue à avancer
-		} else {
-			// recule 
+		ACLMessage msgReceived = waitForMessage(msgTemplate, false);
+		if (msgReceived == null) {
+			return;
+		}
+		System.out.println(this.myAgent.getLocalName() + " knows that " + this.receiver + " backtracking path's length is " + msgReceived.getContent() + ".");
+		if (path.size() == 0) {
+			return;
+		}
+		if (Integer.parseInt(msgReceived.getContent()) > path.size() ||
+				(Integer.parseInt(msgReceived.getContent()) >= path.size() && this.isReceiver)) {
+			System.out.println(this.myAgent.getLocalName() + " begins backtracking to " + path + ".");
+			for (String pos : path) {
+				this.myAgent.getPathToFollow().addFirst(this.myAgent.getCurrentPosition());
+				boolean moveSuccess = ((AbstractDedaleAgent) this.myAgent).moveTo(pos);
+				System.out.println(this.myAgent.getLocalName() + " next bactracking target: " + pos + ", status: " + moveSuccess + ".");
+				while (!moveSuccess) {
+					this.myAgent.doWait(500);
+					((AbstractDedaleAgent) this.myAgent).moveTo(pos);
+					moveSuccess = this.myAgent.getCurrentPosition().equals(pos);
+				}
+			}
+			this.myAgent.doWait(2000);
+			System.out.println(this.myAgent.getLocalName() + " finished backtracking.");
+//			LinkedList<String> reversePath = reverse(path);
+//			reversePath.removeFirst();
+//			path.add(this.myAgent.getCurrentPosition());
+//
+//			LinkedList<String> updatedPath = this.myAgent.getPathToFollow();
+//			updatedPath.addAll(0, reversePath);
+//			updatedPath.addAll(0, path);
+//			this.myAgent.setPathToFollow(updatedPath);
+//			System.out.println(this.myAgent.getLocalName() + " new path is " + this.myAgent.getPathToFollow().toString() + ".");
 		}
 	}
 }
