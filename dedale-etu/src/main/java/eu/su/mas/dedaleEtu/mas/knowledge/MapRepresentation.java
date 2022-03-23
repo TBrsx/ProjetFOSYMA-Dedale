@@ -314,12 +314,12 @@ public class MapRepresentation implements Serializable {
 	public String settleClaims(ExploreCoopAgent agent,String sender,String claimant1,String claimant2) {
 		String trueClaimant = agent.getLocalName();
 		//One of the claimant is an external agent, he keeps the claim
-		//If claimant1 AND claimant2 are external agents, we arbitrarily choose the first one (Not very important);
+		//If claimant1 AND claimant2 are external agents, we arbitrarily choose the first one (We don't want to mess with external agents' knowledge);
 		if ((!claimant1.equals(agent.getLocalName())) && (!claimant1.equals(sender))) {
 			trueClaimant = claimant1;
 		}else if(((!claimant2.equals(agent.getLocalName())) && (!claimant2.equals(sender)))) {
 			trueClaimant = claimant2;
-		}else { //The claimants are agent and sender, agent let the sender keep it
+		}else { //The claimants are agent and sender, agent let the sender keep it so it won't create a clash again when it give back infos
 			trueClaimant = sender;
 		}
 		return trueClaimant;
@@ -345,7 +345,7 @@ public class MapRepresentation implements Serializable {
 			}else {
 				nodeAdded = addNode(n.getNodeId(), new MapAttribute("open", claimant));
 			}
-			agent.addNodeOtherAgents(nodeAdded);
+			agent.addNodeOtherAgents(nodeAdded,sender);
 		}
 
 		//now that all nodes are added, we can add edges
@@ -353,7 +353,7 @@ public class MapRepresentation implements Serializable {
 			for (String s : sgreceived.getEdges(n.getNodeId())) {
 				Edge e = addEdge(n.getNodeId(), s);
 				if (e!= null) {
-					agent.addEdgeOtherAgents(e);
+					agent.addEdgeOtherAgents(e,sender);
 				}
 			}
 		}

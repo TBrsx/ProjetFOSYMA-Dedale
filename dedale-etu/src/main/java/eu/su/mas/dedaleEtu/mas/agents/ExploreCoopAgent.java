@@ -127,5 +127,31 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 				agent.addEdge(e);
 			}
 		}
+		
+		//Add a node to the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents, except one given in parameter
+		public void addNodeOtherAgents(Node n,String excludedAgentName) {
+			
+			Iterator<Map.Entry<String, OtherAgent>> entries = this.getOtherAgents().entrySet().iterator();
+			while (entries.hasNext()) {
+				Map.Entry<String, OtherAgent> entry = entries.next();
+				OtherAgent agent =  entry.getValue();
+				if (!agent.getName().equals(excludedAgentName)){
+					agent.addNode(n);
+				}
+			}
+		}
+		
+		//Add an edge the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents, except one given in parameter
+			public void addEdgeOtherAgents(Edge e,String excludedAgentName) {
+				
+				Iterator<Map.Entry<String, OtherAgent>> entries = this.getOtherAgents().entrySet().iterator();
+				while (entries.hasNext()) {
+					Map.Entry<String, OtherAgent> entry = entries.next();
+					OtherAgent agent =  entry.getValue();
+					if (!agent.getName().equals(excludedAgentName)){
+						agent.addEdge(e);
+					}
+				}
+			}
 
 }
