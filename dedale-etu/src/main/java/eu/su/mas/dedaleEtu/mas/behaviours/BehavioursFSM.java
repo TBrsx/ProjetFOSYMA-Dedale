@@ -51,7 +51,8 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerDefaultTransition("msgReceiver", "infoSharingEmitter");
 		this.registerDefaultTransition("infoSharingEmitter", "exploreMoves");
 		this.registerDefaultTransition("infoSharingReceiver", "exploreMoves");
-		this.registerDefaultTransition("interlock", "msgReceiver");
+		this.registerDefaultTransition("interlockEmitter", "msgReceiver");
+		this.registerDefaultTransition("interlockReceiver", "msgReceiver");
 		
 		this.registerTransition("msgReceiver", "infoSharingReceiver", 3);
 		this.registerTransition("msgReceiver", "interlockReceiver", 2);
