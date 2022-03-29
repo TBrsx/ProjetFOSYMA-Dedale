@@ -138,7 +138,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			while(true) { //Do while, ugly
 				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INFOSHARE"),
 						MessageTemplate.MatchPerformative(ACLMessage.AGREE));
-				receiveMsg = this.messageTimeout(msgTemplate, 1500);
+				receiveMsg = this.messageTimeout(msgTemplate, 600);
 				if (receiveMsg == null) {
 					return; //exit the while loop as no one seems to be there
 					}

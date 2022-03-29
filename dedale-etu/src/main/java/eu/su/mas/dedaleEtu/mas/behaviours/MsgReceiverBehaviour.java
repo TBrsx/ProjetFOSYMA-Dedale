@@ -12,9 +12,11 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 5871538328316209119L;
 	private static final int NO_MSG = 0;
-	private static final int SHARE_TOPO = 1;
+	private static final int SEND_HANDSHAKE = 1;
 	private static final int INTERLOCKING = 2;
 	private static final int INFOSHARE = 3;
+	
+	private static final int SHARINGFREQUENCE = 3;
 
 	private int returnCode = NO_MSG;
 
@@ -47,6 +49,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 		if (msgReceived != null) {
 			getDataStore().put("received-message", msgReceived);
+			getDataStore().put("timeSinceSharing", 0);
 			this.returnCode = INFOSHARE;
 			return;
 		}
@@ -62,7 +65,13 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 		}
 		
 		if (msgReceived == null) {
-			this.returnCode = NO_MSG;
+			if ((int)getDataStore().get("movesWithoutSharing")>SHARINGFREQUENCE) {
+				this.returnCode = SEND_HANDSHAKE;
+				getDataStore().put("movesWithoutSharing", 0);
+			}else {
+				this.returnCode = NO_MSG;
+			}
+			
 		}
 		
 	}
