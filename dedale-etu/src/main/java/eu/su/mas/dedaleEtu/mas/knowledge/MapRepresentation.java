@@ -3,6 +3,7 @@ package eu.su.mas.dedaleEtu.mas.knowledge;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -310,18 +311,23 @@ public class MapRepresentation implements Serializable {
 		g.display();
 	}
 	
-	public String settleClaims(ExploreCoopAgent agent,String sender,String claimant1,String claimant2) {
-		String trueClaimant = agent.getLocalName();
-		//One of the claimant is an external agent, he keeps the claim
-		//If claimant1 AND claimant2 are external agents, we arbitrarily choose the first one (We don't want to mess with external agents' knowledge);
-		if ((!claimant1.equals(agent.getLocalName())) && (!claimant1.equals(sender))) {
-			trueClaimant = claimant1;
-		}else if(((!claimant2.equals(agent.getLocalName())) && (!claimant2.equals(sender)))) {
-			trueClaimant = claimant2;
-		}else { //The claimants are agent and sender, agent let the sender keep it so it won't create a clash again when it give back infos
-			trueClaimant = sender;
+	public String settleClaims(Node clashNode,String claimant1,String claimant2) {
+		//Count the number of neighbors node for each claimant
+		int neighbors1 = 0;
+		int neighbors2 = 0;
+		Iterator<Edge> neighborsEdge = clashNode.edges().iterator();
+		while(neighborsEdge.hasNext()) {
+			Edge treated = neighborsEdge.next();
+			Node neighbor = treated.getSourceNode().getId() != clashNode.getId() ? treated.getSourceNode() : treated.getTargetNode();
+			if(neighbor.getAttribute("claimant").toString().equalsIgnoreCase(claimant1)){
+				neighbors1 += 1;
+			}else if (neighbor.getAttribute("claimant").toString().equalsIgnoreCase(claimant2)){
+				neighbors2 += 1;
+			}
 		}
-		return trueClaimant;
+		//The one with the more claimed neighbors is the true claimant, with priority to sender's given information to avoid another clash (claimant2)
+		return neighbors1 > neighbors2 ? claimant1 : claimant2;
+		
 	}
 
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
@@ -334,7 +340,7 @@ public class MapRepresentation implements Serializable {
 			
 			//If there is a claimant clash
 			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) != n.getNodeContent().getClaimant()){
-				claimant = this.settleClaims(agent, sender, (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
+				claimant = this.settleClaims(this.g.getNode(n.getNodeId()), (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
 			}
 
 

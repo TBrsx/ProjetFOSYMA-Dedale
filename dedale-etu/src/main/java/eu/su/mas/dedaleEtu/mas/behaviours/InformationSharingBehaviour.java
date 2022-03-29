@@ -109,6 +109,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			}
 			this.myAgent.getMyMap().mergeMap(sgreceived,this.myAgent,msgReceived.getSender().getLocalName());
 			}
+			this.myAgent.getPathToFollow().clear();
 	}
 
 	@Override
