@@ -1,12 +1,9 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
-import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
-import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.lang.acl.UnreadableException;
 
 public class MsgReceiverBehaviour extends OneShotBehaviour {
 
@@ -17,6 +14,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	private static final int INFOSHARE = 3;
 	
 	private static final int SHARINGFREQUENCE = 3;
+	
 
 	private int returnCode = NO_MSG;
 
@@ -67,7 +65,6 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 		if (msgReceived == null) {
 			if ((int)getDataStore().get("movesWithoutSharing")>SHARINGFREQUENCE) {
 				this.returnCode = SEND_HANDSHAKE;
-				getDataStore().put("movesWithoutSharing", 0);
 			}else {
 				this.returnCode = NO_MSG;
 			}

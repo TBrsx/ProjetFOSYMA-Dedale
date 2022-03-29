@@ -37,8 +37,20 @@ public class BehavioursFSM extends FSMBehaviour {
 		b = new InformationSharingBehaviour(ag,true);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b, "infoSharingReceiver");
-
-		// Decision state, currently the only valid decision is to explore again.
+		
+		//Information sharing and new try to move before interlocking
+		
+		b = new MsgReceiverBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "msgReceiverMaybeBlocked");
+		
+		b = new InformationSharingBehaviour(ag,false);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "infoSharingEmitterMaybeBlocked");
+		
+		b = new ExploreMoveBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "exploreMovesAfterBlock");
 		
 		// End state, currently do nothing
 		b = new JobDoneBehaviour(ag);
@@ -46,21 +58,31 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerLastState(b, "jobDone");
 
 		// Transitions
-		//Defaults
-		this.registerDefaultTransition("exploreMoves", "msgReceiver");
-		this.registerDefaultTransition("msgReceiver", "infoSharingEmitter");
-		this.registerDefaultTransition("infoSharingEmitter", "exploreMoves");
-		this.registerDefaultTransition("infoSharingReceiver", "exploreMoves");
-		this.registerDefaultTransition("interlockEmitter", "msgReceiver");
-		this.registerDefaultTransition("interlockReceiver", "msgReceiver");
-		//With code
+		
 		this.registerTransition("msgReceiver","exploreMoves",0);
 		this.registerTransition("msgReceiver","infoSharingEmitter",1);
 		this.registerTransition("msgReceiver", "interlockReceiver", 2);
 		this.registerTransition("msgReceiver", "infoSharingReceiver", 3);
-		this.registerTransition("exploreMoves", "interlockEmitter", 0);
+		
 		this.registerTransition("exploreMoves", "msgReceiver", 1);
 		this.registerTransition("exploreMoves", "jobDone", 2);
+		this.registerTransition("exploreMoves", "msgReceiverMaybeBlocked", 3);
+		
+		this.registerDefaultTransition("interlockEmitter", "msgReceiver");
+		this.registerDefaultTransition("interlockReceiver", "msgReceiver");
+		
+		this.registerDefaultTransition("infoSharingEmitter", "exploreMoves");
+		this.registerDefaultTransition("infoSharingReceiver", "exploreMoves");
+		
+		this.registerTransition("msgReceiverMaybeBlocked", "infoSharingEmitterMaybeBlocked", 0);
+		this.registerTransition("msgReceiverMaybeBlocked", "interlockReceiver", 2);
+		this.registerTransition("msgReceiverMaybeBlocked", "infoSharingReceiver", 3);
+		
+		this.registerDefaultTransition("infoSharingEmitterMaybeBlocked", "exploreMovesAfterBlock");
+		
+		this.registerTransition("exploreMovesAfterBlock", "interlockEmitter", 0);
+		this.registerTransition("exploreMovesAfterBlock", "msgReceiver", 1);
+		this.registerTransition("exploreMovesAfterBlock", "jobDone", 2);
 		
 		// Init dataStore content 
 		getDataStore().put("movesWithoutSharing",0);

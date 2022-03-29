@@ -17,9 +17,7 @@ import jade.lang.acl.UnreadableException;
 
 public class InformationSharingBehaviour extends OneShotBehaviour {
 
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = -2058134622078521998L;
 	private ExploreCoopAgent myAgent;
 	private boolean isReceiver;
@@ -114,6 +112,8 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		//Reset number of moves we did without sharing
+		getDataStore().put("movesWithoutSharing", 0);
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
 		if (myPosition==null) {
 			return; //exit this behaviour as I won't be able to do anything

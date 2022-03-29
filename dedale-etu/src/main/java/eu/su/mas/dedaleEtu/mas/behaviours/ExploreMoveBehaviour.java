@@ -25,7 +25,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	private static final int INTERLOCKING = 0;
 	private static final int SUCCESS = 1;
 	private static final int NO_OPEN_NODE = 2;
+	private static final int MAYBE_BLOCKED = 3;
 	private int returnCode;
+	private boolean wasBlocked = false;
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -39,6 +41,11 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent) {
 		super(myagent);
 		this.myAgent = myagent;
+	}
+	public ExploreMoveBehaviour(ExploreCoopAgent myagent,boolean wasBlocked) {
+		super(myagent);
+		this.myAgent = myagent;
+		this.wasBlocked = wasBlocked;
 	}
 
 	@Override
@@ -102,6 +109,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 						nextNode = nodeId;
 				}
 			}
+			
+			
 
 			// 3) select next move
 
@@ -142,8 +151,11 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				
 				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
 					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
-					this.returnCode = INTERLOCKING;
-					return; //Don't try another move
+					if(this.wasBlocked) {
+						this.returnCode = INTERLOCKING;
+					}else {
+						this.returnCode = MAYBE_BLOCKED;
+					}
 				}else {
 					getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
 					this.returnCode = SUCCESS;
