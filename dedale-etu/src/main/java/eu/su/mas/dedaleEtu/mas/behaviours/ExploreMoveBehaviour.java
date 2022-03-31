@@ -91,7 +91,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			String nextNode = null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
 			while (iter.hasNext()) {
-				String nodeId = iter.next().getLeft();
+				Couple<String,List<Couple<Observation,Integer>>> treatedObs = iter.next();
+				String nodeId = treatedObs.getLeft();
 				added = this.myAgent.getMyMap().addNewNode(nodeId, this.myAgent.getLocalName());
 				if (added != null) {
 					this.myAgent.addNodeOtherAgents(added);
@@ -103,10 +104,16 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 						this.myAgent.addEdgeOtherAgents(addedE);
 						this.myAgent.addNodeOtherAgents(addedE.getNode0());
 						this.myAgent.addNodeOtherAgents(addedE.getNode1());
-						
 					}
 					if (nextNode == null && added != null)
 						nextNode = nodeId;
+				}
+				//Also have to add treasures if there are any
+				for( Couple<Observation, Integer> treatedObsTreasures : treatedObs.getRight()) {
+					if (treatedObsTreasures.getLeft().name().equalsIgnoreCase("Gold") || treatedObsTreasures.getLeft().name().equalsIgnoreCase("Diamond")) {
+						
+						this.myAgent.getMyMap().setTreasures(nodeId, treatedObsTreasures);
+					}
 				}
 			}
 			

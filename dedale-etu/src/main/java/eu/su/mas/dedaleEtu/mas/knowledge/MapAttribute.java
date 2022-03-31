@@ -3,6 +3,7 @@ package eu.su.mas.dedaleEtu.mas.knowledge;
 import java.io.Serializable;
 
 import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 
 //This class is where we store attribute of nodes
 
@@ -14,14 +15,14 @@ public class MapAttribute implements Serializable {
 	private String state; //open,closed
 	private String occupied; //wumpus,agent
 	private String claimant; //name of agent that claimed it, empty string if none
-	private Couple<String, Integer> treasure;
+	private Couple<Observation,Integer> treasure;
 
 
 	public MapAttribute() {
 		this.state = "open";
 		this.claimant = "";
 		this.occupied = "";
-		this.treasure = new Couple<String, Integer>("", 0);
+		this.treasure = new Couple<Observation, Integer>(null, 0);
 	}
 
 	public MapAttribute(String state, String claimant) {
@@ -30,7 +31,7 @@ public class MapAttribute implements Serializable {
 		this.claimant = claimant;
 	}
 
-	public MapAttribute(String state, String claimant, String occupied, Couple<String, Integer> treasure) {
+	public MapAttribute(String state, String claimant, String occupied, Couple<Observation, Integer> treasure) {
 		this(state, claimant);
 		this.occupied = occupied;
 		this.treasure = treasure;
@@ -60,11 +61,11 @@ public class MapAttribute implements Serializable {
 		this.occupied = occupied;
 	}
 
-	public Couple<String, Integer> getTreasure() {
+	public Couple<Observation, Integer> getTreasure() {
 		return treasure;
 	}
 
-	public void setTreasure(Couple<String, Integer> treasure) {
+	public void setTreasure(Couple<Observation,Integer> treasure) {
 		this.treasure = treasure;
 	}
 }

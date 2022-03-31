@@ -17,6 +17,7 @@ import org.graphstream.ui.fx_viewer.FxViewer;
 import org.graphstream.ui.view.Viewer;
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import javafx.application.Platform;
@@ -64,6 +65,15 @@ public class MapRepresentation implements Serializable {
 
 		this.nbEdges = 0;
 	}
+	
+	public synchronized MapAttribute getMapAttributeFromNode(String id) {
+		Node treated = this.g.getNode(id);
+		MapAttribute returnedAttribute = new MapAttribute((String)treated.getAttribute("ui.class"),
+				(String)treated.getAttribute("claimant"),
+				(String)treated.getAttribute("occupied"),
+				(Couple<Observation, Integer>)treated.getAttribute("treasure"));
+		return returnedAttribute;
+	}
 
 
 	/**
@@ -96,6 +106,8 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.getState());
 		n.setAttribute("claimant", mapAttribute.getClaimant());
+		n.setAttribute("occupied", mapAttribute.getOccupied());
+		n.setAttribute("treasure", mapAttribute.getTreasure());
 
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
 			n.setAttribute("ui.label", id);
@@ -136,6 +148,27 @@ public class MapRepresentation implements Serializable {
 			return added;
 		}
 		return null;
+	}
+	
+	//Same but also with blocked and treasure
+	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure) {
+		if (this.g.getNode(id) == null) {
+			MapAttribute mapAtt = new MapAttribute("open", claimant,occupied,treasure);
+			Node added = addNode(id, mapAtt);
+			return added;
+		}
+		return null;
+	}
+	
+	public synchronized boolean setTreasures(String id, Couple<Observation, Integer> treasure) {
+		Node treated = this.g.getNode(id);
+		if (treated != null) {
+			MapAttribute mapAtt = this.getMapAttributeFromNode(id);
+			mapAtt.setTreasure(treasure);
+			Node added = addNode(id, mapAtt);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -344,12 +377,16 @@ public class MapRepresentation implements Serializable {
 			}
 
 
-			//check its attribute. If I knew or just learned it was closed, it's now closed on my map. Otherwise it's open.
+			//check its state attribute. If I knew or just learned it was closed, it's now closed on my map. Otherwise, it's open.
 			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")) == "closed" || n.getNodeContent().getState() == "closed") {
 				nodeAdded = addNode(n.getNodeId(), new MapAttribute("closed", claimant));
 			}else {
 				nodeAdded = addNode(n.getNodeId(), new MapAttribute("open", claimant));
 			}
+			
+			
+			
+			
 			agent.addNodeOtherAgents(nodeAdded,sender);
 		}
 
