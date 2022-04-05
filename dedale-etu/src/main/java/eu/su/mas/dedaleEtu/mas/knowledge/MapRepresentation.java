@@ -167,7 +167,7 @@ public class MapRepresentation implements Serializable {
 		if (treated != null) {
 			MapAttribute mapAtt = this.getMapAttributeFromNodeId(id);
 			mapAtt.setTreasure(treasure);
-			Node added = addNode(id, mapAtt);
+			addNode(id, mapAtt);
 			return true;
 		}
 		return false;
@@ -347,9 +347,6 @@ public class MapRepresentation implements Serializable {
 
 		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n : this.sg.getAllNodes()) {
-			Node newNode = this.g.addNode(n.getNodeId());
-			newNode.setAttribute("ui.class", n.getNodeContent().getState());
-			newNode.setAttribute("claimant", n.getNodeContent().getClaimant());
 			addNode(n.getNodeId(), n.getNodeContent());
 			for (String s : this.sg.getEdges(n.getNodeId())) {
 				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
@@ -406,9 +403,25 @@ public class MapRepresentation implements Serializable {
 		return neighbors1 > neighbors2 ? claimant1 : claimant2;
 		
 	}
+		
+	public void replaceMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
+		openGui();
+
+		Integer nbEd = 0;
+		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
+			addNode(n.getNodeId(), n.getNodeContent());
+			for (String s : sgreceived.getEdges(n.getNodeId())) {
+				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
+				nbEd++;
+			}
+		}
+		System.out.println("Loading done");
+	}
+	//TODO : Done : state, claimant. Not done : ressources, occupied.
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
-
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			MapAttribute attributes = n.getNodeContent();
 			String claimant = attributes.getClaimant();
@@ -490,5 +503,12 @@ public class MapRepresentation implements Serializable {
 			path.add(neighboringNodes.get(rand.nextInt(neighboringNodes.size())));
 			return path;
 		}
+	}
+
+	public LinkedList<String> getAllNodes() {
+		LinkedList<String> computedList = (LinkedList<String>) this.g.nodes()
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
 	}
 }
