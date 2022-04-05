@@ -466,15 +466,18 @@ public class MapRepresentation implements Serializable {
 		List<String> nodes = new ArrayList<>();
 		while (edges.hasNext()) {
 			Edge e = edges.next();
-			String node = e.getTargetNode().getId();
-			if (!node.equals(prevNode)) {
-				nodes.add(node);
+			String tNode = e.getTargetNode().getId();
+			String sNode = e.getSourceNode().getId();
+			if (!tNode.equals(prevNode) && !tNode.equals(centerNode)) {
+				nodes.add(tNode);
+			} else if (!sNode.equals(prevNode) && !sNode.equals(centerNode)) {
+				nodes.add(sNode);
 			}
 		}
 		return nodes;
 	}
 
-	public LinkedList<String> getNearestFork(String prevNode, String currentNode) {
+	public LinkedList<String> getNearestFork(String prevNode, String currentNode, List<String> forbiddenNodes) {
 		LinkedList<String> path = new LinkedList<>();
 		List<String> neighboringNodes = getNextNeighboringNodes(currentNode, prevNode);
 		while (neighboringNodes.size() == 1) {
@@ -487,6 +490,7 @@ public class MapRepresentation implements Serializable {
 			return new LinkedList<>();
 		} else {
 			Random rand = new Random();
+			neighboringNodes.removeAll(forbiddenNodes);
 			path.add(neighboringNodes.get(rand.nextInt(neighboringNodes.size())));
 			return path;
 		}
