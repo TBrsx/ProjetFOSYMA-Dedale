@@ -8,6 +8,8 @@ import org.graphstream.graph.Node;
 
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 
 
 
@@ -86,7 +88,12 @@ public class OtherAgent implements Serializable{
 		Iterator<Node> iter = this.nodesToTransfer.iterator();
 		while (iter.hasNext()) {
 			Node n = iter.next();
-			sg.addNode(n.getId(), new MapAttribute(n.getAttribute("ui.class").toString(), n.getAttribute("claimant").toString()));
+			MapAttribute mapAtt = new MapAttribute((String)n.getAttribute("ui.class"),
+					(String)n.getAttribute("claimant"),
+					(String)n.getAttribute("occupied"),
+					(Couple<Observation, Integer>)n.getAttribute("treasure"),
+					(String) n.getAttribute("collector"));
+			sg.addNode(n.getId(),mapAtt);
 		}
 		Iterator<Edge> iterE = this.edgesToTransfer.iterator();
 		while (iterE.hasNext()) {

@@ -1,6 +1,6 @@
 mapname:map2018MultiTypes
-agentExplo:1stAgent:3:free:-1:-1:0:1:1
-agentExplo:2ndAgent:3:free:-1:-1:0:1:1
-agentExplo:3rdAgent:3:free:-1:-1:0:1:1
-agentExplo:4thAgent:3:free:-1:-1:0:1:1
+agentCollect:1stAgent:3:free:1000:1000:0:1:1
+agentCollect:2ndAgent:3:free:1000:1000:0:1:1
+agentCollect:3rdAgent:3:free:1000:1000:0:1:1
+agentCollect:4thAgent:3:free:1000:1000:0:1:1
 HumanControlled:ImHere:3:free:-1:-1:1:1:1

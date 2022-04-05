@@ -29,22 +29,16 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 	private int returnCode;
 	private boolean wasBlocked = false;
 
-	/**
-	 * Current knowledge of the agent regarding the environment
-	 */
+	
 	private ExploreCoopAgent myAgent;
 
-	/**
-	 * 
-	 * @param myagent
-	 */
+	
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent) {
 		super(myagent);
 		this.myAgent = myagent;
 	}
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent,boolean wasBlocked) {
-		super(myagent);
-		this.myAgent = myagent;
+		this(myagent);
 		this.wasBlocked = wasBlocked;
 	}
 
@@ -77,10 +71,13 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			// 1) remove the current node from openlist and add it to closedNodes + claim it
 			// if it's not already claimed.
 			String claimant = this.myAgent.getLocalName();
+			MapAttribute newAttrib = this.myAgent.getMyMap().getMapAttributeFromNodeId(myPosition);
 			if (!this.myAgent.getMyMap().getNodeClaimant(myPosition).equalsIgnoreCase("")) {
 				claimant = this.myAgent.getMyMap().getNodeClaimant(myPosition);
 			}
-			added = this.myAgent.getMyMap().addNode(myPosition, new MapAttribute("closed", claimant));
+			newAttrib.setClaimant(claimant);
+			newAttrib.setState("closed");
+			added = this.myAgent.getMyMap().addNode(myPosition, newAttrib);
 			if (added != null) {
 				this.myAgent.addNodeOtherAgents(added);
 				added = null;

@@ -66,12 +66,13 @@ public class MapRepresentation implements Serializable {
 		this.nbEdges = 0;
 	}
 	
-	public synchronized MapAttribute getMapAttributeFromNode(String id) {
+	public synchronized MapAttribute getMapAttributeFromNodeId(String id) {
 		Node treated = this.g.getNode(id);
 		MapAttribute returnedAttribute = new MapAttribute((String)treated.getAttribute("ui.class"),
 				(String)treated.getAttribute("claimant"),
 				(String)treated.getAttribute("occupied"),
-				(Couple<Observation, Integer>)treated.getAttribute("treasure"));
+				(Couple<Observation, Integer>)treated.getAttribute("treasure"),
+				(String) treated.getAttribute("collector"));
 		return returnedAttribute;
 	}
 
@@ -108,6 +109,7 @@ public class MapRepresentation implements Serializable {
 		n.setAttribute("claimant", mapAttribute.getClaimant());
 		n.setAttribute("occupied", mapAttribute.getOccupied());
 		n.setAttribute("treasure", mapAttribute.getTreasure());
+		n.setAttribute("collector", mapAttribute.getCollector());
 
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
 			n.setAttribute("ui.label", id);
@@ -126,7 +128,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public synchronized Node addNewNode(String id) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", "");
+			MapAttribute mapAtt = new MapAttribute();
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -143,7 +145,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public synchronized Node addNewNode(String id, String claimant) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant);
+			MapAttribute mapAtt = new MapAttribute("open", claimant, "", new Couple<Observation, Integer>(null, 0), "");
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -151,9 +153,9 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	//Same but also with blocked and treasure
-	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure) {
+	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure,String collector) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant,occupied,treasure);
+			MapAttribute mapAtt = new MapAttribute("open", claimant,occupied,treasure,collector);
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -163,7 +165,7 @@ public class MapRepresentation implements Serializable {
 	public synchronized boolean setTreasures(String id, Couple<Observation, Integer> treasure) {
 		Node treated = this.g.getNode(id);
 		if (treated != null) {
-			MapAttribute mapAtt = this.getMapAttributeFromNode(id);
+			MapAttribute mapAtt = this.getMapAttributeFromNodeId(id);
 			mapAtt.setTreasure(treasure);
 			Node added = addNode(id, mapAtt);
 			return true;
@@ -236,6 +238,24 @@ public class MapRepresentation implements Serializable {
 
 		return getShortestPath(myPosition, closest.get().getLeft());
 	}
+	
+	public LinkedList<String> getShortestPathToClosestToCollect(String myPosition, String askName) {
+		//1) Get all claimed
+		List<String> collectnodes = getCollectNodes(askName);
+		//2) select the closest one that is
+		List<Couple<String, Integer>> lc =
+				collectnodes.stream()
+						.map(on -> (getShortestPath(myPosition, on) != null) ? new Couple<String, Integer>(on, getShortestPath(myPosition, on).size()) : new Couple<String, Integer>(on, Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+						.collect(Collectors.toList());
+
+		Optional<Couple<String, Integer>> closest = lc.stream().min(Comparator.comparing(Couple::getRight));
+		if (closest.isEmpty()){
+			return null;
+		}
+		//3) Compute shorterPath
+
+		return getShortestPath(myPosition, closest.get().getLeft());
+	}
 
 
 	public List<String> getOpenNodes(String askName) {
@@ -252,6 +272,30 @@ public class MapRepresentation implements Serializable {
 		} else {
 			return computedList;
 		}
+	}
+	
+	public List<String> getCollectNodes(String askName) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> x.getAttribute("collector").toString().equalsIgnoreCase(askName))
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
+	}
+	
+	public List<String> getClaimedNodes(String askName) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
+	}
+	
+	public List<String> getTreasuresNodes(String treasure) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> ( (Couple<Observation,Integer>) x.getAttribute("treasure")).getLeft().getName().equalsIgnoreCase(treasure))
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
 	}
 
 
@@ -274,7 +318,7 @@ public class MapRepresentation implements Serializable {
 		Iterator<Node> iter = this.g.iterator();
 		while (iter.hasNext()) {
 			Node n = iter.next();
-			sg.addNode(n.getId(), new MapAttribute(n.getAttribute("ui.class").toString(), n.getAttribute("claimant").toString()));
+			sg.addNode(n.getId(), this.getMapAttributeFromNodeId(n.getId()));
 		}
 		Iterator<Edge> iterE = this.g.edges().iterator();
 		while (iterE.hasNext()) {
@@ -366,28 +410,28 @@ public class MapRepresentation implements Serializable {
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
-			String claimant = n.getNodeContent().getClaimant();
+			MapAttribute attributes = n.getNodeContent();
+			String claimant = attributes.getClaimant();
 			//Add it (Reminder : does nothing if already in the map)
 			Node nodeAdded = null;
 			nodeAdded = addNewNode(n.getNodeId(), claimant);
 			
 			//If there is a claimant clash
-			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")) != n.getNodeContent().getClaimant()){
+			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")).equalsIgnoreCase(n.getNodeContent().getClaimant())){
 				claimant = this.settleClaims(this.g.getNode(n.getNodeId()), (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
 			}
 
-
+			attributes.setClaimant(claimant);
 			//check its state attribute. If I knew or just learned it was closed, it's now closed on my map. Otherwise, it's open.
-			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")) == "closed" || n.getNodeContent().getState() == "closed") {
-				nodeAdded = addNode(n.getNodeId(), new MapAttribute("closed", claimant));
+			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")).equalsIgnoreCase("closed") || n.getNodeContent().getState().equalsIgnoreCase("closed")) {
+				attributes.setState("closed");
+				nodeAdded = addNode(n.getNodeId(), attributes);
 			}else {
-				nodeAdded = addNode(n.getNodeId(), new MapAttribute("open", claimant));
+				attributes.setState("open");
+				nodeAdded = addNode(n.getNodeId(), attributes);
 			}
 			
-			
-			
-			
-			agent.addNodeOtherAgents(nodeAdded,sender);
+			agent.addNodeOtherAgents(nodeAdded);
 		}
 
 		//now that all nodes are added, we can add edges
@@ -408,6 +452,12 @@ public class MapRepresentation implements Serializable {
 	public boolean hasOpenNode() {
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class") == "open")
+				.findAny()).isPresent();
+	}
+	
+	public boolean hasNodeToCollect(String askName) {
+		return (this.g.nodes()
+				.filter(n -> ((String)n.getAttribute("collector")).equalsIgnoreCase(askName))
 				.findAny()).isPresent();
 	}
 

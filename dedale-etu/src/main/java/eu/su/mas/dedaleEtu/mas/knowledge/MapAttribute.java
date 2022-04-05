@@ -15,6 +15,7 @@ public class MapAttribute implements Serializable {
 	private String state; //open,closed
 	private String occupied; //wumpus,agent
 	private String claimant; //name of agent that claimed it, empty string if none
+	private String collector; //name of agent that has been tasked of collecting here, empty string if none
 	private Couple<Observation,Integer> treasure;
 
 
@@ -23,18 +24,15 @@ public class MapAttribute implements Serializable {
 		this.claimant = "";
 		this.occupied = "";
 		this.treasure = new Couple<Observation, Integer>(null, 0);
+		this.setCollector("");
 	}
 
-	public MapAttribute(String state, String claimant) {
-		this();
+	public MapAttribute(String state, String claimant, String occupied, Couple<Observation, Integer> treasure,String collector) {
 		this.state = state;
 		this.claimant = claimant;
-	}
-
-	public MapAttribute(String state, String claimant, String occupied, Couple<Observation, Integer> treasure) {
-		this(state, claimant);
 		this.occupied = occupied;
 		this.treasure = treasure;
+		this.setCollector(collector);
 	}
 
 	public String getState() {
@@ -67,5 +65,13 @@ public class MapAttribute implements Serializable {
 
 	public void setTreasure(Couple<Observation,Integer> treasure) {
 		this.treasure = treasure;
+	}
+
+	public String getCollector() {
+		return collector;
+	}
+
+	public void setCollector(String collector) {
+		this.collector = collector;
 	}
 }

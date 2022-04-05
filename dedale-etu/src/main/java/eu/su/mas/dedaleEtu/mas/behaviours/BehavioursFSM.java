@@ -56,6 +56,16 @@ public class BehavioursFSM extends FSMBehaviour {
 		b = new JobDoneBehaviour(ag);
 		b.setDataStore(this.getDataStore());
 		this.registerLastState(b, "jobDone");
+		
+		// Decision state
+		b = new CollectDecisionBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "collectDecision");
+		
+		// Collect state
+		b = new ShareAndCollectBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "shareCollect");
 
 		// Transitions
 		
@@ -65,7 +75,7 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("msgReceiver", "infoSharingReceiver", 3);
 		
 		this.registerTransition("exploreMoves", "msgReceiver", 1);
-		this.registerTransition("exploreMoves", "jobDone", 2);
+		this.registerTransition("exploreMoves", "collectDecision", 2);
 		this.registerTransition("exploreMoves", "msgReceiverMaybeBlocked", 3);
 		
 		this.registerDefaultTransition("interlockEmitter", "msgReceiver");
@@ -82,10 +92,17 @@ public class BehavioursFSM extends FSMBehaviour {
 		
 		this.registerTransition("exploreMovesAfterBlock", "interlockEmitter", 0);
 		this.registerTransition("exploreMovesAfterBlock", "msgReceiver", 1);
-		this.registerTransition("exploreMovesAfterBlock", "jobDone", 2);
+		this.registerTransition("exploreMovesAfterBlock", "collectDecision", 2);
+		
+		this.registerTransition("collectDecision", "shareCollect", 1);
+		
+		this.registerTransition("shareCollect", "shareCollect", 0);
+		this.registerTransition("shareCollect", "jobDone", 1);
+		
 		
 		// Init dataStore content 
 		getDataStore().put("movesWithoutSharing",0);
+		getDataStore().put("decision-master", "1stAgent");
 	}
 
 }

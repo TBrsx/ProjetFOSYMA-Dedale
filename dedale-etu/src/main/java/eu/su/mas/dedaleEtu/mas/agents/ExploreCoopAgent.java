@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 
@@ -27,6 +28,8 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private String nextPosition;
 	private LinkedList<String> pathToFollow = new LinkedList<String>();
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
+	private Observation treasureType = Observation.GOLD;
+	private int maxTreasureQuantity;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -128,19 +131,6 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 			}
 		}
 		
-		//Add a node to the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents, except one given in parameter
-		public void addNodeOtherAgents(Node n,String excludedAgentName) {
-			
-			Iterator<Map.Entry<String, OtherAgent>> entries = this.getOtherAgents().entrySet().iterator();
-			while (entries.hasNext()) {
-				Map.Entry<String, OtherAgent> entry = entries.next();
-				OtherAgent agent =  entry.getValue();
-				if (!agent.getName().equals(excludedAgentName)){
-					agent.addNode(n);
-				}
-			}
-		}
-		
 		//Add an edge the informations we have to transfer the next time we see another agents - do this for ALL agents in otherAgents, except one given in parameter
 			public void addEdgeOtherAgents(Edge e,String excludedAgentName) {
 				
@@ -152,6 +142,22 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 						agent.addEdge(e);
 					}
 				}
+			}
+
+			public Observation getTreasureType() {
+				return treasureType;
+			}
+
+			public void setTreasureType(Observation treasureType) {
+				this.treasureType = treasureType;
+			}
+
+			public int getMaxTreasureQuantity() {
+				return maxTreasureQuantity;
+			}
+
+			public void setMaxTreasureQuantity(int maxTreasureQuantity) {
+				this.maxTreasureQuantity = maxTreasureQuantity;
 			}
 
 }

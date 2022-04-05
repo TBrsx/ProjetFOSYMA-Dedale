@@ -17,7 +17,11 @@ public class JobDoneBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		System.out.println(this.myAgent.getLocalName() + " - Job Done !");
+		while(true) {
+			System.out.println(this.myAgent.getLocalName() + " - Job Done !");
+			this.myAgent.doWait(3000);
+		}
+		
 	}
 
 }
