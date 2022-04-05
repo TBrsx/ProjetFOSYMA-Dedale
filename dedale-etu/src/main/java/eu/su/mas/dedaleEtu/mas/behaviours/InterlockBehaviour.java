@@ -34,13 +34,13 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	private ACLMessage waitForMessage(MessageTemplate msgTemplate, boolean doTimeout) {
 		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		int cpt = 0;
-		while (msgReceived == null && (cpt < 2 || !doTimeout)) {
-			this.myAgent.doWait(2000);
+		while (msgReceived == null && (cpt < 10 || !doTimeout)) {
+			this.myAgent.doWait(250);
 			msgReceived = this.myAgent.receive(msgTemplate);
 			if (doTimeout)
 				cpt++;
 		}
-		if (cpt >= 2 && doTimeout) {
+		if (cpt >= 10 && doTimeout) {
 			return null;
 		}
 		return msgReceived;
@@ -54,8 +54,8 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		return newList;
 	}
 
-	private ACLMessage setupMessage(ACLMessage msg, String content) {
-		msg.setProtocol("INTERLOCKING");
+	private ACLMessage setupMessage(ACLMessage msg, String content, String protcol) {
+		msg.setProtocol("INTERLOCKING" + protcol);
 		msg.setSender(this.myAgent.getAID());
 		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
 		if (content != null) {
@@ -66,6 +66,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		this.myAgent.doWait(500); // Remove this, only for display in debug
 		System.out.println(this.myAgent.getLocalName() + " enters interlocking state");
 		System.out.println(this.myAgent.getLocalName() + " current node is " + this.myAgent.getCurrentPosition() + " and next node is " + this.myAgent.getNextPosition() + ".");
 
@@ -99,10 +100,10 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			ACLMessage msg;
 			boolean isInterlocking = data[0].equals(this.myAgent.getNextPosition()) && data[1].equals(this.myAgent.getCurrentPosition());
 			if (isInterlocking) {
-				msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), null);
+				msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), null, "");
 				System.out.println(this.myAgent.getLocalName() + " is indeed interlocked.");
 			} else {
-				msg = setupMessage(new ACLMessage(ACLMessage.DISCONFIRM), null);
+				msg = setupMessage(new ACLMessage(ACLMessage.DISCONFIRM), null, "");
 				System.out.println(this.myAgent.getLocalName() + " isn't interlocked.");
 			}
 			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
@@ -141,18 +142,28 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			System.out.println(this.myAgent.getLocalName() + " knows that " + this.receiver + " is interlocked.");
 		}
 
-		System.out.println(this.myAgent.getLocalName() + " is computing its backtracking path.");
-		LinkedList<String> path = this.myAgent.getMyMap()
-				.getNearestFork(this.myAgent.getNextPosition(), this.myAgent.getCurrentPosition());
-		System.out.println(this.myAgent.getLocalName() + " backtracking path is " + path.toString() + ".");
-		String content = path.size() == 0 ? Integer.toString(Integer.MAX_VALUE) : Integer.toString(path.size());
-		System.out.println(this.myAgent.getLocalName() + " backtracking path's length is " + content + ".");
-		ACLMessage msg = setupMessage(new ACLMessage(ACLMessage.INFORM), content);
+		ACLMessage msg = setupMessage(new ACLMessage(ACLMessage.INFORM), this.myAgent.getPathToFollow().toString(), "-PATH_DATA");
 		((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
-
-		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-PATH_DATA"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived = waitForMessage(msgTemplate, false);
+
+		String msgContent = msgReceived.getContent().replaceAll("\\[|\\]", "");
+		List<String> otherAgentPath = List.of(msgContent.split(", *"));
+
+		System.out.println(this.myAgent.getLocalName() + " is computing its backtracking path.");
+		LinkedList<String> path = this.myAgent.getMyMap()
+				.getNearestFork(this.myAgent.getNextPosition(), this.myAgent.getCurrentPosition(), otherAgentPath);
+		System.out.println(this.myAgent.getLocalName() + " backtracking path is " + path.toString() + ".");
+		System.out.println(this.myAgent.getLocalName() + " path is " + this.myAgent.getPathToFollow() + ".");
+		String content = path.size() == 0 ? Integer.toString(Integer.MAX_VALUE) : Integer.toString(path.size());
+		System.out.println(this.myAgent.getLocalName() + " backtracking path's length is " + content + ".");
+		msg = setupMessage(new ACLMessage(ACLMessage.INFORM), content, "-PATH_SIZE");
+		((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+
+		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-PATH_SIZE"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+		msgReceived = waitForMessage(msgTemplate, false);
 		if (msgReceived == null) {
 			return;
 		}
@@ -162,28 +173,60 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		}
 		if (Integer.parseInt(msgReceived.getContent()) > path.size() ||
 				(Integer.parseInt(msgReceived.getContent()) >= path.size() && this.isReceiver)) {
+			String target = path.size() > 1 ? path.get(path.size()-2) : this.myAgent.getCurrentPosition();
+			msg = setupMessage(new ACLMessage(ACLMessage.INFORM), target, "-TARGET");
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
 			System.out.println(this.myAgent.getLocalName() + " begins backtracking to " + path + ".");
 			for (String pos : path) {
 				this.myAgent.getPathToFollow().addFirst(this.myAgent.getCurrentPosition());
-				boolean moveSuccess = ((AbstractDedaleAgent) this.myAgent).moveTo(pos);
+				((AbstractDedaleAgent) this.myAgent).moveTo(pos);
+				boolean moveSuccess = this.myAgent.getCurrentPosition().equals(pos);
 				System.out.println(this.myAgent.getLocalName() + " next bactracking target: " + pos + ", status: " + moveSuccess + ".");
-				while (!moveSuccess) {
+				int cpt = 0;
+				while (!moveSuccess && cpt < 5) {
 					this.myAgent.doWait(500);
 					((AbstractDedaleAgent) this.myAgent).moveTo(pos);
 					moveSuccess = this.myAgent.getCurrentPosition().equals(pos);
+					cpt++;
 				}
+				if (cpt >= 5) return;
+				this.myAgent.doWait(500);
 			}
-			this.myAgent.doWait(2000);
-			System.out.println(this.myAgent.getLocalName() + " finished backtracking.");
-//			LinkedList<String> reversePath = reverse(path);
-//			reversePath.removeFirst();
-//			path.add(this.myAgent.getCurrentPosition());
-//
-//			LinkedList<String> updatedPath = this.myAgent.getPathToFollow();
-//			updatedPath.addAll(0, reversePath);
-//			updatedPath.addAll(0, path);
-//			this.myAgent.setPathToFollow(updatedPath);
-//			System.out.println(this.myAgent.getLocalName() + " new path is " + this.myAgent.getPathToFollow().toString() + ".");
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-DONE"),
+					MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+			msgReceived = waitForMessage(msgTemplate, false);
+			msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), null, "-DONE");
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+			this.myAgent.doWait(1000);
+		} else {
+			this.myAgent.doWait(1000);
+			System.out.println(this.myAgent.getLocalName() + " starts to move.");
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-TARGET"),
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+			msg = waitForMessage(msgTemplate, false);
+			String target = msg.getContent();
+			int cpt = 0;
+			while (!this.myAgent.getCurrentPosition().equals(target) && !this.myAgent.getPathToFollow().isEmpty() && cpt <= 5) {
+				if (((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+					this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
+					cpt = 0;
+				} else {
+					cpt++;
+				}
+				this.myAgent.doWait(500);
+			}
+			if (cpt >= 5) return;
+			System.out.println(this.myAgent.getLocalName() + " finished its interlocking, sending go message...");
+			msg = setupMessage(new ACLMessage(ACLMessage.QUERY_IF), "done?", "-DONE");
+			((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-DONE"),
+					MessageTemplate.MatchPerformative(ACLMessage.CONFIRM));
+			msgReceived = this.myAgent.receive(msgTemplate);
+			while (msgReceived == null) {
+				((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+				this.myAgent.doWait(250);
+				msgReceived = this.myAgent.receive(msgTemplate);
+			}
 		}
 	}
 }
