@@ -1,5 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.util.LinkedList;
+
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
@@ -15,12 +17,12 @@ public class BehavioursFSM extends FSMBehaviour {
 		b.setDataStore(this.getDataStore());
 		this.registerFirstState(b, "msgReceiver");
 
-		// Explore state = 1 movement to explore.
+		// Explore state
 		b = new ExploreMoveBehaviour(ag);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b, "exploreMoves");
 		
-		// Interlocking state, emitter or receiver
+		// Interlocking state, emitter or receiver, during initial explore
 		b = new InterlockBehaviour(ag,false);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b,"interlockEmitter");
@@ -66,6 +68,47 @@ public class BehavioursFSM extends FSMBehaviour {
 		b = new ShareAndCollectBehaviour(ag);
 		b.setDataStore(this.getDataStore());
 		this.registerState(b, "shareCollect");
+		
+		// Interlocking state, emitter or receiver, during decision
+		b = new InterlockBehaviour(ag,false);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlockEmitter2");
+		
+		b = new InterlockBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlockReceiver2");
+		
+		
+		//Msg receiver states during decision (used mainly for interlocking)
+		
+		b = new MsgReceiverBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "msgReceiver2");
+		
+		//Idem but during collect
+		
+		b = new InterlockBehaviour(ag,false);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlockEmitter3");
+		
+		b = new InterlockBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b,"interlockReceiver3");
+		
+		b = new MsgReceiverBehaviour(ag);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "msgReceiver3");
+	
+		
+		//Infosharing during decision state
+		
+		b = new InformationSharingBehaviour(ag,false);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "infoSharingEmitter2");
+		
+		b = new InformationSharingBehaviour(ag,true);
+		b.setDataStore(this.getDataStore());
+		this.registerState(b, "infoSharingReceiver2");
 
 		// Transitions
 		
@@ -94,14 +137,35 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("exploreMovesAfterBlock", "msgReceiver", 1);
 		this.registerTransition("exploreMovesAfterBlock", "collectDecision", 2);
 		
+		this.registerTransition("collectDecision", "msgReceiver2", 0);
 		this.registerTransition("collectDecision", "shareCollect", 1);
+		this.registerTransition("collectDecision", "interlockEmitter2", 2);
 		
-		this.registerTransition("shareCollect", "shareCollect", 0);
+		this.registerTransition("msgReceiver2", "collectDecision", 0);
+		this.registerTransition("msgReceiver2","interlockReceiver2",2);
+		this.registerTransition("msgReceiver2", "infoSharingReceiver2", 3);
+		
+		this.registerDefaultTransition("interlockEmitter2", "msgReceiver2");
+		this.registerDefaultTransition("interlockReceiver2", "msgReceiver2");
+		
+		this.registerDefaultTransition("infoSharingReceiver2", "msgReceiver2");
+		this.registerDefaultTransition("infoSharingEmitter2", "msgReceiver2");
+		
+		this.registerTransition("shareCollect", "msgReceiver3", 0);
 		this.registerTransition("shareCollect", "jobDone", 1);
+		this.registerTransition("shareCollect","interlockEmitter3",2);
+		
+		this.registerTransition("msgReceiver3", "shareCollect", 0);
+		this.registerTransition("msgReceiver3","interlockReceiver3",2);
+		this.registerTransition("msgReceiver3", "infoSharingReceiver3", 3);
+		
+		this.registerDefaultTransition("interlockEmitter3", "msgReceiver3");
+		this.registerDefaultTransition("interlockReceiver3", "msgReceiver3");
 		
 		
 		// Init dataStore content 
 		getDataStore().put("movesWithoutSharing",0);
+		getDataStore().put("awareOfPlan", new LinkedList<String>());
 		getDataStore().put("decision-master", "1stAgent");
 	}
 

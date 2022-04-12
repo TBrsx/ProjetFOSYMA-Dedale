@@ -24,7 +24,7 @@ public class MapAttribute implements Serializable {
 		this.claimant = "";
 		this.occupied = "";
 		this.treasure = new Couple<Observation, Integer>(null, 0);
-		this.setCollector("");
+		this.collector = "";
 	}
 
 	public MapAttribute(String state, String claimant, String occupied, Couple<Observation, Integer> treasure,String collector) {
@@ -32,7 +32,7 @@ public class MapAttribute implements Serializable {
 		this.claimant = claimant;
 		this.occupied = occupied;
 		this.treasure = treasure;
-		this.setCollector(collector);
+		this.collector = collector;
 	}
 
 	public String getState() {

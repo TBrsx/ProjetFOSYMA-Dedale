@@ -17,25 +17,19 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 	
 	private static final long serialVersionUID = -3403675615819306473L;
 	private ExploreCoopAgent myAgent;
-	private boolean skipSharing = false;
 	private int returnCode;
 	private static final int NOT_DONE = 0;
 	private static final int DONE = 1;
-	private static final int NOT_DONE_AND_SHARED = 2;
+	private static final int INTERLOCKING = 2;
 	
 	
 	public ShareAndCollectBehaviour(ExploreCoopAgent myagent) {
 		super(myagent);
 		this.myAgent = myagent;
 	}
-	public ShareAndCollectBehaviour(ExploreCoopAgent myagent,boolean skipSharing) {
-		this(myagent);
-		this.skipSharing = skipSharing;
-	}
 
 	@Override
 	public void action() {
-		
 		try {
 			this.myAgent.doWait(500);
 		} catch (Exception e) {
@@ -68,15 +62,12 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 		//Are we done ? TODO : Change this
 		this.myAgent.setPathToFollow( this.myAgent.getMyMap().getShortestPathToClosestToCollect(myPosition, this.myAgent.getLocalName()));
 		if(this.myAgent.getPathToFollow() != null) {
-			//No
-			if (this.skipSharing) {
-				this.returnCode = NOT_DONE_AND_SHARED;
-			}else {
 				this.returnCode = NOT_DONE;
-			}
-			System.out.println(this.myAgent.getPathToFollow());
-			this.myAgent.moveTo(this.myAgent.getPathToFollow().removeFirst());
-			//Yes
+				this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
+				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
+					this.returnCode = INTERLOCKING;
+				}
 		}else {
 			this.returnCode = DONE;
 			return;

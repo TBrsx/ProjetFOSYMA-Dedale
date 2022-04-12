@@ -30,6 +30,8 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
 	private Observation treasureType = Observation.GOLD;
 	private int maxTreasureQuantity;
+	private String currentPlan = "";
+	private String meetingPoint = "";
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -158,6 +160,22 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 
 			public void setMaxTreasureQuantity(int maxTreasureQuantity) {
 				this.maxTreasureQuantity = maxTreasureQuantity;
+			}
+
+			public String getCurrentPlan() {
+				return currentPlan;
+			}
+
+			public void setCurrentPlan(String currentPlan) {
+				this.currentPlan = currentPlan;
+			}
+
+			public String getMeetingPoint() {
+				return meetingPoint;
+			}
+
+			public void setMeetingPoint(String meetingPoint) {
+				this.meetingPoint = meetingPoint;
 			}
 
 }

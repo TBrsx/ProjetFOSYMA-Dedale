@@ -2,7 +2,6 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
@@ -13,7 +12,6 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 
 import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
-import eu.su.mas.dedaleEtu.mas.knowledge.OtherAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploreMoveBehaviour;
 
@@ -137,6 +135,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			} else {
 				// 3.4) If there is no open node, the exploration *should* be complete
 				//System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
+				this.myAgent.setNextPosition("");
+				this.myAgent.getPathToFollow().clear();
 				this.returnCode = NO_OPEN_NODE;
 				return; //No need to do the other moves
 			}

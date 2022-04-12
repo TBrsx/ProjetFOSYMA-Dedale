@@ -18,7 +18,6 @@ import org.graphstream.ui.view.Viewer;
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
-import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import javafx.application.Platform;
 
@@ -315,6 +314,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	private void serializeGraphTopology() {
 		this.sg = new SerializableSimpleGraph<String, MapAttribute>();
+		
 		Iterator<Node> iter = this.g.iterator();
 		while (iter.hasNext()) {
 			Node n = iter.next();
@@ -405,20 +405,11 @@ public class MapRepresentation implements Serializable {
 	}
 		
 	public void replaceMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
-		this.g = new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet", nodeStyle);
-
-		openGui();
-
-		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
-			addNode(n.getNodeId(), n.getNodeContent());
-			for (String s : sgreceived.getEdges(n.getNodeId())) {
-				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
-				nbEd++;
-			}
+			MapAttribute attributes = n.getNodeContent();
+			addNewNode(n.getNodeId());
+			addNode(n.getNodeId(),attributes);
 		}
-		System.out.println("Loading done");
 	}
 	//TODO : Done : state, claimant. Not done : ressources, occupied.
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
@@ -489,6 +480,25 @@ public class MapRepresentation implements Serializable {
 		}
 		return nodes;
 	}
+	
+	public LinkedList<String> getRandomPathFrom(String center,int range){
+		LinkedList<String> path = new LinkedList<String>();
+		path.add(center);
+		for (int i = 0;i<range;i++) {
+			Stream<Edge> edges = g.getNode(path.getLast()).edges();
+			LinkedList<Edge> edgesL = new LinkedList<Edge>(edges.toList());
+			Random rand = new Random();
+			Edge chosenEdge = edgesL.get(rand.nextInt(edgesL.size()));
+			String tNode = chosenEdge.getTargetNode().getId();
+			String sNode = chosenEdge.getSourceNode().getId();
+			if(tNode.equalsIgnoreCase(path.getLast())) {
+				path.add(sNode);
+			}else {
+				path.add(tNode);
+			}
+		}
+		return path;
+	}
 
 	public LinkedList<String> getNearestFork(String prevNode, String currentNode, List<String> forbiddenNodes) {
 		LinkedList<String> path = new LinkedList<>();
@@ -509,8 +519,8 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 
-	public LinkedList<String> getAllNodes() {
-		LinkedList<String> computedList = (LinkedList<String>) this.g.nodes()
+	public List<String> getAllNodes() {
+		List<String> computedList = this.g.nodes()
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;

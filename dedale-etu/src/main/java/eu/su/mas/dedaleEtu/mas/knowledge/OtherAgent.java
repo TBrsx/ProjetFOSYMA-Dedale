@@ -20,23 +20,19 @@ public class OtherAgent implements Serializable{
 	private static final long serialVersionUID = -2214875361759942206L;
 	
 	private String name;
-	private String lastKnownPosition;
 	private LinkedList<Node> nodesToTransfer;
 	private LinkedList<Edge> edgesToTransfer;
+	private int capaDiamond;
+	private int capaGold;
+	private String currentPlan = "";
+	private boolean alreadyMet = false;
+	private String meetingPoint = "";
 	
 	public OtherAgent(String name){
 		this.setName(name);
-		this.setLastKnownPosition(null);
 		this.setNodesToTransfer(new LinkedList<Node>());
 		this.setEdgesToTransfer(new LinkedList<Edge>());
 	}
-	public OtherAgent(String name,String position){
-		this.setName(name);
-		this.setLastKnownPosition(position);
-		this.setNodesToTransfer(new LinkedList<Node>());
-		this.setEdgesToTransfer(new LinkedList<Edge>());
-	}
-	
 	
 	//Add a node to the nodesToTransfer list, updating it if it already exists
 	public void addNode(Node n) {
@@ -56,14 +52,6 @@ public class OtherAgent implements Serializable{
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getLastKnownPosition() {
-		return lastKnownPosition;
-	}
-
-	public void setLastKnownPosition(String lastKnownPosition) {
-		this.lastKnownPosition = lastKnownPosition;
 	}
 
 	public LinkedList<Node> getNodesToTransfer() {
@@ -110,5 +98,51 @@ public class OtherAgent implements Serializable{
 	
 	public boolean hasInfoToShare() {
 		return !((this.edgesToTransfer.isEmpty())||this.nodesToTransfer.isEmpty());
+	}
+
+
+	public int getCapaDiamond() {
+		return capaDiamond;
+	}
+
+
+	public void setCapaDiamond(int capaDiamond) {
+		this.capaDiamond = capaDiamond;
+	}
+
+
+	public int getCapaGold() {
+		return capaGold;
+	}
+
+
+	public void setCapaGold(int capaGold) {
+		this.capaGold = capaGold;
+	}
+
+
+	public String getCurrentPlan() {
+		return currentPlan;
+	}
+
+
+	public void setCurrentPlan(String currentPlan) {
+		this.currentPlan = currentPlan;
+	}
+
+	public boolean isAlreadyMet() {
+		return alreadyMet;
+	}
+
+	public void setAlreadyMet(boolean alreadyMet) {
+		this.alreadyMet = alreadyMet;
+	}
+
+	public String getMeetingPoint() {
+		return meetingPoint;
+	}
+
+	public void setMeetingPoint(String meetingPoint) {
+		this.meetingPoint = meetingPoint;
 	}
 }

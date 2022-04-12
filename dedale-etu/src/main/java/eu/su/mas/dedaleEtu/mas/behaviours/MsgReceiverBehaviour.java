@@ -27,18 +27,10 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	public void action() {
 
-		// ==== Daemons ====
-		// Receive a position
-		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-POSITION"),
-				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-		if (msgReceived != null) {
-			this.myAgent.getOtherAgents().get(msgReceived.getSender().getLocalName()).setLastKnownPosition(msgReceived.getContent());;
-		}
-
 		// ==== Messages that calls for a change of state====
 		// First one read is the one treated
-		msgReceived = null;
+		ACLMessage msgReceived = null;
+		MessageTemplate msgTemplate = null;
 
 		// Handshake try
 		msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INFOSHARE"),
