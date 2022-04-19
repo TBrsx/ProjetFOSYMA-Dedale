@@ -56,10 +56,14 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 		//We reached our destination, there should be a chest to open
 		if (path.isEmpty()) {
 			if(this.myAgent.openLock(this.myAgent.getTreasureType())) {
-				this.myAgent.pick();
+				int pickedQuantity = this.myAgent.pick();
+				System.out.println(this.myAgent.getLocalName() + " - I picked " + Integer.toString(pickedQuantity) + " gold");
+			}else {
+				System.out.println(this.myAgent.getLocalName() + " - I failed to open the lock");
 			}
+		
 		}
-		//Are we done ? TODO : Change this
+		
 		this.myAgent.setPathToFollow( this.myAgent.getMyMap().getShortestPathToClosestToCollect(myPosition, this.myAgent.getLocalName()));
 		if(this.myAgent.getPathToFollow() != null) {
 				this.returnCode = NOT_DONE;

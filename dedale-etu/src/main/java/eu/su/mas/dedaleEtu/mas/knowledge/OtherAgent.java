@@ -10,6 +10,7 @@ import org.graphstream.graph.Node;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
+import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 
 
 
@@ -96,8 +97,10 @@ public class OtherAgent implements Serializable{
 		return sg;
 	}
 	
-	public boolean hasInfoToShare() {
-		return !((this.edgesToTransfer.isEmpty())||this.nodesToTransfer.isEmpty());
+	public boolean hasInfoToShare(ExploreCoopAgent myagent) {
+		return (!this.edgesToTransfer.isEmpty()
+				||!this.nodesToTransfer.isEmpty()
+				||this.getCurrentPlan() != myagent.getCurrentPlan());
 	}
 
 

@@ -142,6 +142,7 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("collectDecision", "interlockEmitter2", 2);
 		
 		this.registerTransition("msgReceiver2", "collectDecision", 0);
+		this.registerTransition("msgReceiver2","infoSharingEmitter2",1);
 		this.registerTransition("msgReceiver2","interlockReceiver2",2);
 		this.registerTransition("msgReceiver2", "infoSharingReceiver2", 3);
 		
