@@ -465,7 +465,7 @@ public class MapRepresentation implements Serializable {
 				.findAny()).isPresent();
 	}
 
-	private List<String> getNextNeighboringNodes(String centerNode, String prevNode) {
+	public List<String> getNextNeighboringNodes(String centerNode, String prevNode) {
 		Iterator<Edge> edges = g.getNode(centerNode).edges().iterator();
 		List<String> nodes = new ArrayList<>();
 		while (edges.hasNext()) {

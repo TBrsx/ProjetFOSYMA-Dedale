@@ -26,7 +26,9 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	private List<String> listAgentNames = new ArrayList<String>();
 	private String nextPosition;
+	private String targetPosition;
 	private LinkedList<String> pathToFollow = new LinkedList<String>();
+	private boolean isInterlocking = false;
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
 	private Observation treasureType = Observation.GOLD;
 	private int maxTreasureQuantity;
@@ -94,6 +96,14 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	public void setNextPosition(String nextPosition) { this.nextPosition = nextPosition; }
 
 	public String getNextPosition() { return nextPosition; }
+
+	public String getTargetPosition() {
+		return targetPosition;
+	}
+
+	public void setTargetPosition(String targetPosition) {
+		this.targetPosition = targetPosition;
+	}
 
 	public LinkedList<String> getPathToFollow() {
 		return pathToFollow;
@@ -178,4 +188,11 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 				this.meetingPoint = meetingPoint;
 			}
 
+	public void setInterlocking(boolean interlocking) {
+		isInterlocking = interlocking;
+	}
+
+	public boolean isInterlocking() {
+		return isInterlocking;
+	}
 }
