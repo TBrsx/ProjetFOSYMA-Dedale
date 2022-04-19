@@ -33,8 +33,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	
 	private void createPlan() {
 		((LinkedList<String>) this.getDataStore().get("awareOfPlan")).add(this.myAgent.getLocalName());
-		((LinkedList<String>) this.getDataStore().get("awareOfPlan")).add("3rdAgent");
-		((LinkedList<String>) this.getDataStore().get("awareOfPlan")).add("4thAgent");
 		ArrayList<String> allNodes = (ArrayList<String>) this.myAgent.getMyMap().getAllNodes();
 		this.myAgent.setCurrentPlan("ElPlan");
 		
