@@ -12,6 +12,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 
 import eu.su.mas.dedaleEtu.mas.behaviours.BehavioursFSM;
+import eu.su.mas.dedaleEtu.mas.knowledge.CollectPlan;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.OtherAgent;
 
@@ -32,7 +33,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
 	private Observation treasureType = Observation.GOLD;
 	private int maxTreasureQuantity;
-	private String currentPlan = "";
+	private CollectPlan currentPlan;
 	private String meetingPoint = "";
 
 	/**
@@ -172,11 +173,11 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 				this.maxTreasureQuantity = maxTreasureQuantity;
 			}
 
-			public String getCurrentPlan() {
+			public CollectPlan getCurrentPlan() {
 				return currentPlan;
 			}
 
-			public void setCurrentPlan(String currentPlan) {
+			public void setCurrentPlan(CollectPlan currentPlan) {
 				this.currentPlan = currentPlan;
 			}
 

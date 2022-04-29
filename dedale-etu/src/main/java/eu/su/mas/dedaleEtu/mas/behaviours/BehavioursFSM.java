@@ -65,9 +65,9 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerState(b, "collectDecision");
 		
 		// Collect state
-		b = new ShareAndCollectBehaviour(ag);
+		b = new CollectBehavior(ag);
 		b.setDataStore(this.getDataStore());
-		this.registerState(b, "shareCollect");
+		this.registerState(b, "Collect");
 		
 		// Interlocking state, emitter or receiver, during decision
 		b = new InterlockBehaviour(ag,false);
@@ -138,7 +138,7 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("exploreMovesAfterBlock", "collectDecision", 2);
 		
 		this.registerTransition("collectDecision", "msgReceiver2", 0);
-		this.registerTransition("collectDecision", "shareCollect", 1);
+		this.registerTransition("collectDecision", "Collect", 1);
 		this.registerTransition("collectDecision", "interlockEmitter2", 2);
 		
 		this.registerTransition("msgReceiver2", "collectDecision", 0);
@@ -152,13 +152,14 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerDefaultTransition("infoSharingReceiver2", "msgReceiver2");
 		this.registerDefaultTransition("infoSharingEmitter2", "msgReceiver2");
 		
-		this.registerTransition("shareCollect", "msgReceiver3", 0);
-		this.registerTransition("shareCollect", "jobDone", 1);
-		this.registerTransition("shareCollect","interlockEmitter3",2);
+		this.registerTransition("Collect", "msgReceiver3", 0);
+		this.registerTransition("Collect", "jobDone", 1);
+		this.registerTransition("Collect","interlockEmitter3",2);
 		
-		this.registerTransition("msgReceiver3", "shareCollect", 0);
+		this.registerTransition("msgReceiver3", "Collect", 0);
+		this.registerTransition("msgReceiver3", "Collect", 1);
 		this.registerTransition("msgReceiver3","interlockReceiver3",2);
-		this.registerTransition("msgReceiver3", "infoSharingReceiver3", 3);
+		this.registerTransition("msgReceiver3", "infoSharingReceiver2", 3);
 		
 		this.registerDefaultTransition("interlockEmitter3", "msgReceiver3");
 		this.registerDefaultTransition("interlockReceiver3", "msgReceiver3");

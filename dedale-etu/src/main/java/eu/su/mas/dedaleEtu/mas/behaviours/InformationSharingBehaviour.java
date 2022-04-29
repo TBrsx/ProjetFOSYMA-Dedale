@@ -10,6 +10,7 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.CollectPlan;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.OtherAgent;
 import jade.core.AID;
@@ -64,16 +65,16 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	
 	private void shareInfo(String receiver) {
 		//System.out.println(this.myAgent.getLocalName() + " - Sending informations");
+		
 		//Basic informations like capacity and meeting point
 		if(!this.myAgent.getOtherAgents().get(receiver).isAlreadyMet()) {
 			this.shareFirst(receiver);
 			this.shareMeetingPoint(receiver);
 			this.myAgent.getOtherAgents().get(receiver).setAlreadyMet(true);
 		}
-		if(this.myAgent.getCurrentPlan().isEmpty()) {
-			//Map sharing
-			this.shareMap(receiver);
-		}else {
+		//Map sharing
+		this.shareMap(receiver);
+		if(this.myAgent.getCurrentPlan() != null) {
 			this.sharePlan(receiver);
 		}
 		
@@ -91,16 +92,16 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			//System.out.println(this.myAgent.getLocalName() + " - Received informations");
 			String protocol = receiveMsg.getProtocol();
 			switch(protocol) {
-			case "FIRST-MEETING"://Basic informations like capacity and meeting point
+			case "FIRST-MEETING": //Basic informations like backpack size
 				this.receiveFirst(sender,receiveMsg);
 				break;
-			case "MEETING-POINT":
+			case "MEETING-POINT": //Meeting point
 				this.receiveMeetingPoint(sender,receiveMsg);
 				break;
-			case "SHARE-TOPO" : //map sharing
+			case "SHARE-TOPO" : //Map
 				this.receiveMap(sender,receiveMsg);
 				break;
-			case "SHARE-PLAN" : //plan sharing
+			case "SHARE-PLAN" : //Plan
 				this.receivePlan(sender,receiveMsg);
 				break;
 			case "INFOSHARE" : //Exit
@@ -174,14 +175,13 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//System.out.println(this.myAgent.getLocalName() + " - I send " + msg.toString());
 		this.myAgent.sendMessage(msg);
 		
 	}
 	
 	private void receiveMap(String sender,ACLMessage msgReceived) {
 
-		if (msgReceived != null && this.myAgent.getCurrentPlan().isEmpty()) {
+		if (msgReceived != null && this.myAgent.getCurrentPlan() == null) {
 			SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
 			try {
 				sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
@@ -199,46 +199,45 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
 		msg.setSender(this.myAgent.getAID());
 		msg.setProtocol("SHARE-PLAN");
-		msg.setContent(this.myAgent.getCurrentPlan());
+		msg.setContent(this.myAgent.getCurrentPlan().getName());
 		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
 		this.myAgent.sendMessage(msg);
 		
 		//Receive his answer
 		//TODO : Handle more cases than AGREE
-		ACLMessage msgReceived = null;
-		while(msgReceived == null) {
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-					MessageTemplate.MatchPerformative(ACLMessage.AGREE));
-			msgReceived = this.myAgent.receive(msgTemplate);
-		}
 		
-		//Update list of experts
-		LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
-		experts.add(receiver);
-		this.getDataStore().put("awareOfPlan",experts);
+			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.AGREE),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
+			ACLMessage msgReceived = this.waitForMessage(msgTemplate, 500);
+			if(msgReceived == null) {
+				return;
+			}
 		
 		//Send the plan
 		msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("SHARE-PLAN");
 		msg.setSender(this.myAgent.getAID());
 		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
-		SerializableSimpleGraph<String, MapAttribute> sg = this.myAgent.getMyMap().getSerializableGraph();
 		try {
-			msg.setContentObject(sg);
+			msg.setContentObject(this.myAgent.getCurrentPlan());
+			this.myAgent.sendMessage(msg);
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
+			if(this.messageTimeout(msgTemplate,3000) != null) {
+				//Update list of experts
+				LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
+				experts.add(receiver);
+				this.getDataStore().put("awareOfPlan",experts);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		this.myAgent.sendMessage(msg);
 	}
 	
 	private void receivePlan(String sender, ACLMessage msgReceived) {
 		//Get name of plan and set it as my own
 		//TODO : If same plan, tell other agent to f*ck off
 		//TODO : If my plan is fresher, send him my plan instead
-		for (int bla = 0 ; bla <10 ; bla++) {
-			System.out.println(this.myAgent.getLocalName() + " - Receive plan");
-		}
-		this.myAgent.setCurrentPlan(msgReceived.getContent());
 		ACLMessage msg = new ACLMessage(ACLMessage.AGREE);
 		msg.setProtocol("SHARE-PLAN");
 		msg.setSender(this.myAgent.getAID());
@@ -246,21 +245,23 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		this.myAgent.sendMessage(msg);
 		msg=null;
 		msgReceived = null;
-		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"), MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		//Wait for next message, no timeout, bad
-		while(msgReceived == null) {
-			msgReceived = this.myAgent.receive(msgTemplate);
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+				MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
+		//Wait for next message
+		msgReceived = this.waitForMessage(msgTemplate, 500);
+		if(msgReceived != null) {
+			try {
+				this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
+				msg = new ACLMessage(ACLMessage.CONFIRM);
+				msg.setProtocol("SHARE-PLAN");
+				msg.setSender(this.myAgent.getAID());
+				msg.addReceiver(msgReceived.getSender());
+				msg.setContent("I received your plan, everything is fine !");
+				this.myAgent.sendMessage(msg);
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
 		}
-		//Replace my map, it is the plan I will now follow
-		SerializableSimpleGraph<String, MapAttribute> sgreceived = null;
-		try {
-			sgreceived = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-		} catch (UnreadableException e) {
-			e.printStackTrace();
-		}
-		this.myAgent.getMyMap().replaceMap(sgreceived);
-		this.myAgent.getPathToFollow().clear();
-		this.myAgent.setNextPosition(null);
 	}
 	
 	@Override

@@ -25,7 +25,7 @@ public class OtherAgent implements Serializable{
 	private LinkedList<Edge> edgesToTransfer;
 	private int capaDiamond;
 	private int capaGold;
-	private String currentPlan = "";
+	private CollectPlan currentPlan;
 	private boolean alreadyMet = false;
 	private String meetingPoint = "";
 	
@@ -98,9 +98,17 @@ public class OtherAgent implements Serializable{
 	}
 	
 	public boolean hasInfoToShare(ExploreCoopAgent myagent) {
+		String planNameMYAGENT = "";
+		String planNameTHIS = "";
+		if(this.getCurrentPlan()!=null) {
+			planNameTHIS = this.getCurrentPlan().getName();
+		}
+		if(myagent.getCurrentPlan()!=null) {
+			planNameMYAGENT = myagent.getCurrentPlan().getName();
+		}
 		return (!this.edgesToTransfer.isEmpty()
 				||!this.nodesToTransfer.isEmpty()
-				||this.getCurrentPlan() != myagent.getCurrentPlan());
+				|| planNameTHIS!= planNameMYAGENT);
 	}
 
 
@@ -124,12 +132,12 @@ public class OtherAgent implements Serializable{
 	}
 
 
-	public String getCurrentPlan() {
+	public CollectPlan getCurrentPlan() {
 		return currentPlan;
 	}
 
 
-	public void setCurrentPlan(String currentPlan) {
+	public void setCurrentPlan(CollectPlan currentPlan) {
 		this.currentPlan = currentPlan;
 	}
 

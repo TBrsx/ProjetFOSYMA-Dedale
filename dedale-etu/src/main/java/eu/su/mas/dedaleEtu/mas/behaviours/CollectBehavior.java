@@ -8,10 +8,9 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
-import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import jade.core.behaviours.OneShotBehaviour;
 
-public class ShareAndCollectBehaviour extends OneShotBehaviour{
+public class CollectBehavior extends OneShotBehaviour{
 	
 
 	
@@ -23,13 +22,20 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 	private static final int INTERLOCKING = 2;
 	
 	
-	public ShareAndCollectBehaviour(ExploreCoopAgent myagent) {
+	public CollectBehavior(ExploreCoopAgent myagent) {
 		super(myagent);
 		this.myAgent = myagent;
 	}
 
 	@Override
 	public void action() {
+		
+		
+		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
+			this.returnCode = DONE;
+			return;
+		}
+		
 		try {
 			this.myAgent.doWait(500);
 		} catch (Exception e) {
@@ -37,9 +43,11 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 		}
 		
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
-		MapAttribute newAttrib = this.myAgent.getMyMap().getMapAttributeFromNodeId(myPosition);
-		newAttrib.setCollector("");
-		this.myAgent.getMyMap().addNode(myPosition, newAttrib);
+		LinkedList<String> attributedNodes = this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName());
+		//System.out.println(this.myAgent.getLocalName() + "Mes noeuds encore attribués sont : " + attributedNodes);
+		//System.out.println(this.myAgent.getLocalName() + " - Mon chemin à suivre est " + this.myAgent.getPathToFollow());
+		
+		
 		//Update treasures knowledge
 		List<Couple<String, List<Couple<Observation, Integer>>>> lobs = ((AbstractDedaleAgent) this.myAgent).observe();
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
@@ -57,22 +65,24 @@ public class ShareAndCollectBehaviour extends OneShotBehaviour{
 		if (path.isEmpty()) {
 			if(this.myAgent.openLock(this.myAgent.getTreasureType())) {
 				int pickedQuantity = this.myAgent.pick();
-				System.out.println(this.myAgent.getLocalName() + " - I picked " + Integer.toString(pickedQuantity) + " gold");
+				System.out.println(this.myAgent.getLocalName() + " - I picked " + Integer.toString(pickedQuantity) + " " + this.myAgent.getTreasureType());
 			}else {
 				System.out.println(this.myAgent.getLocalName() + " - I failed to open the lock");
 			}
-		
+			//Set path to next node to collect
+			this.myAgent.getCurrentPlan().removeNodeWithId(myPosition);
+			attributedNodes = this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName());
+			this.myAgent.setPathToFollow( this.myAgent.getMyMap().getShortestPathToClosestInList(myPosition, attributedNodes));
 		}
 		
-		this.myAgent.setPathToFollow( this.myAgent.getMyMap().getShortestPathToClosestToCollect(myPosition, this.myAgent.getLocalName()));
-		if(this.myAgent.getPathToFollow() != null) {
-				this.returnCode = NOT_DONE;
-				this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
-				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
-					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
-					this.returnCode = INTERLOCKING;
-				}
-		}else {
+		if (this.myAgent.getPathToFollow() != null) { //If the path previously computed is null, it means there is nothing left to collect for this agent
+			this.returnCode = NOT_DONE;
+			this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
+			if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+				this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
+				this.returnCode = INTERLOCKING;
+			}
+		} else {
 			this.returnCode = DONE;
 			return;
 		}

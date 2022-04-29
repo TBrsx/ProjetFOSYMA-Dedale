@@ -1,20 +1,16 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.CollectPlan;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
-import org.graphstream.graph.Node;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapAttributeCollect;
 
-import dataStructures.serializableGraph.SerializableSimpleGraph;
-import jade.core.AID;
+
 import jade.core.behaviours.OneShotBehaviour;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.lang.acl.UnreadableException;
 
 public class CollectDecisionBehaviour extends OneShotBehaviour{
 	
@@ -34,41 +30,54 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private void createPlan() {
 		((LinkedList<String>) this.getDataStore().get("awareOfPlan")).add(this.myAgent.getLocalName());
 		ArrayList<String> allNodes = (ArrayList<String>) this.myAgent.getMyMap().getAllNodes();
-		this.myAgent.setCurrentPlan("ElPlan");
+		
+		CollectPlan elPlan = new CollectPlan("ElPlan");
 		
 		for (String n : allNodes) {
 			MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(n);
 			if (mapAtt.getTreasure().getLeft() != null) {
-				mapAtt.setCollector(mapAtt.getClaimant());
-				Node added = this.myAgent.getMyMap().addNode(n, mapAtt);
-				if (added != null) {
-					this.myAgent.addNodeOtherAgents(added);
-				}
+				elPlan.addNode(new MapAttributeCollect(n,"",mapAtt.getClaimant(),""));
 			}
 		}
-		System.out.println(this.myAgent.getLocalName() + " - J'ai crée un plan, nommé " + this.myAgent.getCurrentPlan());
+		this.myAgent.setCurrentPlan(elPlan);
+		System.out.println(this.myAgent.getLocalName() + " - J'ai crée un plan, nommé " + this.myAgent.getCurrentPlan().getName());
 		this.returnCode = PLAN_SHARING;
 	}
-	private void sharePlan() {
+	private void sharePlan() { //Move to the meeting point, then try to contact other agents near
+		String meeting = this.myAgent.getMeetingPoint();
+		//System.out.println(this.myAgent.getLocalName() + " - Je partage mon plan, nommé " + this.myAgent.getCurrentPlan().getName());
+		//System.out.println(this.myAgent.getLocalName() + " - Le meeting point est " + meeting);
+		
+		
 		if (this.myAgent.getPathToFollow().isEmpty()){
-			String meeting = this.myAgent.getMeetingPoint();
-			if(this.myAgent.getCurrentPosition().equalsIgnoreCase(meeting)) {
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 5));
+			if(this.myAgent.getCurrentPosition().equalsIgnoreCase(meeting)) { //If I am at the meeting point
+				getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+10); //Force handshake try
+				this.myAgent.doWait(1000); //To make sure we don't flood the environment with messages, as this agent do nothing more than trying to handshake now
+
 			}else {
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPath(this.myAgent.getCurrentPosition(), meeting));			}
-		}
-		this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
-		if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
-			this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
-			this.returnCode = INTERLOCKING;
-			return;
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPath(this.myAgent.getCurrentPosition(), meeting));			
+			}
+		}else {
+			this.myAgent.setNextPosition(this.myAgent.getPathToFollow().removeFirst());
+			if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+				this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
+				this.returnCode = INTERLOCKING;
+				return;
+			}
 		}
 		getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
 		this.returnCode = PLAN_SHARING;
 		
-		//Stop sharing if all agents are experts
+		//Stop sharing and start collecting if all agents are experts
 		LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
-		if (experts.size() == this.myAgent.getOtherAgents().size()+1) {
+		if (experts.size() >= this.myAgent.getOtherAgents().size()+1) {
+			//Set path to follow to reach first treasure to collect
+			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
+					this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
+			if (this.myAgent.getPathToFollow() == null) {
+				this.myAgent.setPathToFollow(new LinkedList<String>());
+			}
+			this.myAgent.setNextPosition("");
 			this.returnCode = BEGIN_COLLECT;
 		}
 	}
@@ -97,15 +106,21 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		this.myAgent.doWait(500);
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
-			if (this.myAgent.getCurrentPlan().isEmpty()){
+			if (this.myAgent.getCurrentPlan() == null){
 				this.createPlan();
 			}else {
 				this.sharePlan();
 			}
 		}else {
-			if (this.myAgent.getCurrentPlan().isEmpty()){
+			if (this.myAgent.getCurrentPlan() == null){
 				this.searchPlan();
 			}else {
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
+						this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
+				if (this.myAgent.getPathToFollow() == null) {
+					this.myAgent.setPathToFollow(new LinkedList<String>());
+				}
+				this.myAgent.setNextPosition("");
 				this.returnCode = BEGIN_COLLECT;
 			}
 		}

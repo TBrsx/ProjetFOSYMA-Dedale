@@ -66,6 +66,7 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	}
 
 	public int onEnd() {
+		//System.out.println(this.myAgent.getLocalName() + " " + this.returnCode);
 		return this.returnCode;
 	}
 

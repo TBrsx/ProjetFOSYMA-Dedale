@@ -108,7 +108,6 @@ public class MapRepresentation implements Serializable {
 		n.setAttribute("claimant", mapAttribute.getClaimant());
 		n.setAttribute("occupied", mapAttribute.getOccupied());
 		n.setAttribute("treasure", mapAttribute.getTreasure());
-		n.setAttribute("collector", mapAttribute.getCollector());
 
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
 			n.setAttribute("ui.label", id);
@@ -238,12 +237,9 @@ public class MapRepresentation implements Serializable {
 		return getShortestPath(myPosition, closest.get().getLeft());
 	}
 	
-	public LinkedList<String> getShortestPathToClosestToCollect(String myPosition, String askName) {
-		//1) Get all claimed
-		List<String> collectnodes = getCollectNodes(askName);
-		//2) select the closest one that is
+	public LinkedList<String> getShortestPathToClosestInList(String myPosition, LinkedList<String> nodesList) {
 		List<Couple<String, Integer>> lc =
-				collectnodes.stream()
+				nodesList.stream()
 						.map(on -> (getShortestPath(myPosition, on) != null) ? new Couple<String, Integer>(on, getShortestPath(myPosition, on).size()) : new Couple<String, Integer>(on, Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
 						.collect(Collectors.toList());
 
@@ -251,7 +247,6 @@ public class MapRepresentation implements Serializable {
 		if (closest.isEmpty()){
 			return null;
 		}
-		//3) Compute shorterPath
 
 		return getShortestPath(myPosition, closest.get().getLeft());
 	}
@@ -271,14 +266,6 @@ public class MapRepresentation implements Serializable {
 		} else {
 			return computedList;
 		}
-	}
-	
-	public List<String> getCollectNodes(String askName) {
-		List<String> computedList = this.g.nodes()
-				.filter(x -> x.getAttribute("collector").toString().equalsIgnoreCase(askName))
-				.map(Node::getId)
-				.collect(Collectors.toList());
-		return computedList;
 	}
 	
 	public List<String> getClaimedNodes(String askName) {

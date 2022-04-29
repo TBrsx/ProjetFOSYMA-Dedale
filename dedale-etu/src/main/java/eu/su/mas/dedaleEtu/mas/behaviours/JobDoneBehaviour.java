@@ -1,6 +1,5 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
-import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import jade.core.behaviours.OneShotBehaviour;
 
@@ -20,7 +19,7 @@ public class JobDoneBehaviour extends OneShotBehaviour {
 	public void action() {
 		while(true) {
 			System.out.println(this.myAgent.getLocalName() + " - Job Done !");
-			this.myAgent.doWait(1000);
+			this.myAgent.doWait(3000);
 			this.myAgent.moveTo(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 1).get(0));
 		}
 		
