@@ -27,6 +27,7 @@ public class OtherAgent implements Serializable{
 	private int capaGold;
 	private CollectPlan currentPlan;
 	private boolean alreadyMet = false;
+	private boolean knownCapa = false;
 	private String meetingPoint = "";
 	
 	public OtherAgent(String name){
@@ -155,5 +156,13 @@ public class OtherAgent implements Serializable{
 
 	public void setMeetingPoint(String meetingPoint) {
 		this.meetingPoint = meetingPoint;
+	}
+
+	public boolean isKnownCapa() {
+		return knownCapa;
+	}
+
+	public void setKnownCapa(boolean knownCapa) {
+		this.knownCapa = knownCapa;
 	}
 }

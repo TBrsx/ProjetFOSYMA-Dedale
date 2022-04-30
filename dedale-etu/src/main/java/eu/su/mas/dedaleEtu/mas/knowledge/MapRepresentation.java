@@ -407,6 +407,12 @@ public class MapRepresentation implements Serializable {
 			Node nodeAdded = null;
 			nodeAdded = addNewNode(n.getNodeId(), claimant);
 			
+			//Treasures
+			
+			if(n.getNodeContent().getTreasure().getLeft()!=null) {
+				attributes.setTreasure(n.getNodeContent().getTreasure());
+			}
+			
 			//If there is a claimant clash
 			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")).equalsIgnoreCase(n.getNodeContent().getClaimant())){
 				claimant = this.settleClaims(this.g.getNode(n.getNodeId()), (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
@@ -421,6 +427,7 @@ public class MapRepresentation implements Serializable {
 				attributes.setState("open");
 				nodeAdded = addNode(n.getNodeId(), attributes);
 			}
+			
 			
 			agent.addNodeOtherAgents(nodeAdded);
 		}

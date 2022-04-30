@@ -1,9 +1,13 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.HashMap;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
@@ -18,6 +22,7 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+
 
 
 public class InformationSharingBehaviour extends OneShotBehaviour {
@@ -68,7 +73,6 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		
 		//Basic informations like capacity and meeting point
 		if(!this.myAgent.getOtherAgents().get(receiver).isAlreadyMet()) {
-			this.shareFirst(receiver);
 			this.shareMeetingPoint(receiver);
 			this.myAgent.getOtherAgents().get(receiver).setAlreadyMet(true);
 		}
@@ -83,8 +87,9 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	//Depending on the type of protocol we receive, start the according receiving function
 	private void receiveInfo(String sender) {
 		while(true) { //Do while
-			MessageTemplate msgTemplate = MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME));
-			ACLMessage receiveMsg = this.waitForMessage(msgTemplate, 600);
+			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.not(MessageTemplate.MatchPerformative(ACLMessage.AGREE)), 
+					MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME)));
+			ACLMessage receiveMsg = this.waitForMessage(msgTemplate, 200);
 			if(receiveMsg == null) {
 				//System.out.println(this.myAgent.getLocalName() + " - I've stopped waiting for informations...");
 				return;
@@ -92,9 +97,6 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			//System.out.println(this.myAgent.getLocalName() + " - Received informations");
 			String protocol = receiveMsg.getProtocol();
 			switch(protocol) {
-			case "FIRST-MEETING": //Basic informations like backpack size
-				this.receiveFirst(sender,receiveMsg);
-				break;
 			case "MEETING-POINT": //Meeting point
 				this.receiveMeetingPoint(sender,receiveMsg);
 				break;
@@ -112,30 +114,6 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		}
 	}
 	
-	private void shareFirst(String receiver) {
-		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setProtocol("FIRST-MEETING");
-		msg.setSender(this.myAgent.getAID());
-		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
-		List<Couple<Observation, Integer>> bp = this.myAgent.getBackPackFreeSpace();
-		String capa = "";
-		for (Couple<Observation,Integer> c : bp) {
-			capa = capa + c.getLeft().getName() + ":" + c.getRight().toString() + ";";
-		}
-		msg.setContent(capa);
-		this.myAgent.sendMessage(msg);
-	}
-	
-	private void receiveFirst(String sender,ACLMessage msgReceived) {
-		if (msgReceived != null) {
-			String content = msgReceived.getContent();
-			String[] capas = content.split(";");
-			int capaGold = Integer.parseInt((capas[0].split(":"))[1]);
-			int capaDiam = Integer.parseInt((capas[1].split(":"))[1]);
-			this.myAgent.getOtherAgents().get(sender).setCapaGold(capaGold);
-			this.myAgent.getOtherAgents().get(sender).setCapaDiamond(capaDiam);
-		}
-	}
 	
 	private void shareMeetingPoint(String receiver) {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -208,7 +186,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		
 			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
 					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.AGREE),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
-			ACLMessage msgReceived = this.waitForMessage(msgTemplate, 500);
+			ACLMessage msgReceived = this.waitForMessage(msgTemplate, 200);
 			if(msgReceived == null) {
 				return;
 			}
@@ -248,7 +226,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
 				MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
 		//Wait for next message
-		msgReceived = this.waitForMessage(msgTemplate, 500);
+		msgReceived = this.waitForMessage(msgTemplate, 200);
 		if(msgReceived != null) {
 			try {
 				this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
@@ -264,6 +242,61 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		}
 	}
 	
+	public void askForCapacities(String sender) {
+		ArrayList<String> agentsWithUnknownCapa = new ArrayList<String>();
+		Iterator<Map.Entry<String, OtherAgent>> entries = this.myAgent.getOtherAgents().entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry<String, OtherAgent> entry = entries.next();
+			OtherAgent agent =  entry.getValue();
+			if(!agent.isKnownCapa()) {
+				agentsWithUnknownCapa.add(agent.getName());
+			}
+		}
+		
+		ACLMessage sendMsg = new ACLMessage(ACLMessage.AGREE);
+		sendMsg.setProtocol("INFOSHARE");
+		sendMsg.setSender(this.myAgent.getAID());
+		try {
+			sendMsg.setContentObject(agentsWithUnknownCapa);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		sendMsg.addReceiver(new AID(sender,AID.ISLOCALNAME));
+		((AbstractDedaleAgent) this.myAgent).sendMessage(sendMsg);
+	}
+	
+	public void sendCapacities(String receiver,HashMap<String,Couple<Integer,Integer>> capaAgentsToSend) {
+		ACLMessage sendMsg = new ACLMessage(ACLMessage.INFORM);
+		sendMsg.setProtocol("CAPACITIES");
+		sendMsg.setSender(this.myAgent.getAID());
+		sendMsg.addReceiver(new AID(receiver,AID.ISLOCALNAME));
+		try {
+			sendMsg.setContentObject(capaAgentsToSend);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.myAgent.sendMessage(sendMsg);
+	}
+	
+	public void receiveCapacities(String sender) {
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME)), MessageTemplate.MatchProtocol("CAPACITIES"));
+		this.msgReceived = this.waitForMessage(msgTemplate, 200);
+		if(this.msgReceived != null) {
+			try {
+				HashMap<String,Couple<Integer,Integer>> capaAgentsReceived = (HashMap<String, Couple<Integer, Integer>>) this.msgReceived.getContentObject();
+				for (Entry<String, Couple<Integer, Integer>> entry : capaAgentsReceived.entrySet()) {
+				    String key = entry.getKey();
+				    Couple<Integer, Integer> value = entry.getValue();
+				    this.myAgent.getOtherAgents().get(key).setCapaDiamond(value.getLeft());
+				    this.myAgent.getOtherAgents().get(key).setCapaGold(value.getRight());
+				    this.myAgent.getOtherAgents().get(key).setKnownCapa(true);
+				}
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	@Override
 	public void action() {
 		//Reset number of moves we did without sharing
@@ -273,7 +306,6 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			return; //exit this behaviour as I won't be able to do anything
 		}
 		ACLMessage sendMsg = null;
-		ACLMessage receiveMsg = null;
 		MessageTemplate msgTemplate = null;
 		
 		if((!isReceiver)) { //Started this behavior as its own initiative, so I got priority on sending my stuff if someone can hear me
@@ -293,13 +325,44 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			while(true) { //Do while, ugly
 				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INFOSHARE"),
 						MessageTemplate.MatchPerformative(ACLMessage.AGREE));
-				receiveMsg = this.messageTimeout(msgTemplate, 600);
-				if (receiveMsg == null) {
+				this.msgReceived = this.messageTimeout(msgTemplate, 600);
+				if (this.msgReceived == null) {
 					return; //exit the while loop as no one seems to be there
 					}
-				String receiver = receiveMsg.getSender().getLocalName();
 				
-				//Check if I have informations to communicate to it
+				//First message I receive contains the list of agents which my contact doesn't knows capacity of
+				String receiver = this.msgReceived.getSender().getLocalName();
+				HashMap<String,Couple<Integer,Integer>> capaAgentsToSend = new HashMap<String,Couple<Integer,Integer>>();
+				try {
+					ArrayList<String> recAgentsWithUnknownCapa = (ArrayList<String>) this.msgReceived.getContentObject() ;
+					for(String agentName : recAgentsWithUnknownCapa) {
+						if(!agentName.equalsIgnoreCase(this.myAgent.getLocalName())) {
+							if(this.myAgent.getOtherAgents().get(agentName).isKnownCapa()) {
+								OtherAgent agent = this.myAgent.getOtherAgents().get(agentName);
+								capaAgentsToSend.put(agentName, new Couple<Integer,Integer>(agent.getCapaDiamond(),agent.getCapaGold()));
+							}
+						}else {
+							List<Couple<Observation, Integer>> bp = this.myAgent.getBackPackFreeSpace();
+							int diamCapa = 0;
+							int goldCapa = 0;
+							for(Couple<Observation,Integer> c : bp) {
+								if(c.getLeft() == Observation.DIAMOND) {
+									diamCapa = c.getRight();
+								}
+								if(c.getLeft() == Observation.GOLD) {
+									goldCapa = c.getRight();
+								}
+							}
+							capaAgentsToSend.put(this.myAgent.getLocalName(), new Couple<Integer,Integer>(diamCapa, goldCapa));
+						}
+					}
+					this.sendCapacities(receiver, capaAgentsToSend);
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+				
+				
+				//Check if I have other facultative informations to communicate to it
 				if(this.myAgent.getOtherAgents().get(receiver).hasInfoToShare(this.myAgent)) {
 					//Share these informations
 					this.shareInfo(receiver);
@@ -307,35 +370,77 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 				//Inform that I sent all I had to send (Which can be nothing) and go into receiver mode
 				sendMsg.setPerformative(ACLMessage.INFORM);
 				sendMsg.setProtocol("INFOSHARE");
-				sendMsg.setContent("I've got nothing more for you. Waiting for your informations.");
+				sendMsg.setContent("I've got nothing more for you. I'm going to send you the list of the agents I don't know about.");
 				sendMsg.clearAllReceiver();
 				sendMsg.addReceiver(new AID(receiver,AID.ISLOCALNAME));
 				//System.out.println(this.myAgent.getLocalName() + " - I send " + sendMsg.toString());
 				((AbstractDedaleAgent) this.myAgent).sendMessage(sendMsg);
+				this.askForCapacities(receiver);
+				this.receiveCapacities(receiver);
 				this.receiveInfo(receiver);
+				
 			}
 			
 		}else { //is receiver
+			
 			this.msgReceived = (ACLMessage) this.getDataStore().get("received-message");
 			String sender = this.msgReceived.getSender().getLocalName();
-			sendMsg = new ACLMessage(ACLMessage.AGREE);
-			sendMsg.setProtocol("INFOSHARE");
-			sendMsg.setSender(this.myAgent.getAID());
-			sendMsg.setContent("I'm "+this.myAgent.getLocalName() + " at " + myPosition + " and I'm ok to share informations, waiting for yours !");
-			sendMsg.addReceiver(new AID(sender,AID.ISLOCALNAME));
-			((AbstractDedaleAgent) this.myAgent).sendMessage(sendMsg);
+			
+			//As a confirmation, tell him the agent with the capacities I don't know about
+			this.askForCapacities(sender);
+			this.receiveCapacities(sender);
+			
 			this.receiveInfo(sender);
+			
+			msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.AGREE), MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME)));
+			this.msgReceived = this.waitForMessage(msgTemplate, 200);
+			if(this.msgReceived != null) {
+				HashMap<String,Couple<Integer,Integer>> capaAgentsToSend = new HashMap<String,Couple<Integer,Integer>>();
+				try {
+					ArrayList<String> recAgentsWithUnknownCapa = (ArrayList<String>) this.msgReceived.getContentObject() ;
+					for(String agentName : recAgentsWithUnknownCapa) {
+						if(!agentName.equalsIgnoreCase(this.myAgent.getLocalName())) {
+							if(this.myAgent.getOtherAgents().get(agentName).isKnownCapa()) {
+								OtherAgent agent = this.myAgent.getOtherAgents().get(agentName);
+								capaAgentsToSend.put(agentName, new Couple<Integer,Integer>(agent.getCapaDiamond(),agent.getCapaGold()));
+							}
+						}else {
+							List<Couple<Observation, Integer>> bp = this.myAgent.getBackPackFreeSpace();
+							int diamCapa = 0;
+							int goldCapa = 0;
+							for(Couple<Observation,Integer> c : bp) {
+								if(c.getLeft() == Observation.DIAMOND) {
+									diamCapa = c.getRight();
+								}
+								if(c.getLeft() == Observation.GOLD) {
+									goldCapa = c.getRight();
+								}
+							}
+							capaAgentsToSend.put(this.myAgent.getLocalName(), new Couple<Integer,Integer>(diamCapa, goldCapa));
+						}
+					}
+					this.sendCapacities(sender, capaAgentsToSend);
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			
 			//Check if I have informations to communicate to it
 			if(this.myAgent.getOtherAgents().get(sender).hasInfoToShare(this.myAgent)) {
 				this.shareInfo(sender);
 			}
-			sendMsg.setPerformative(ACLMessage.INFORM);
+			sendMsg = new ACLMessage(ACLMessage.INFORM);
 			sendMsg.setProtocol("INFOSHARE");
 			sendMsg.setContent("I've got nothing for more you. Have a nice day !");
 			sendMsg.clearAllReceiver();
 			sendMsg.addReceiver(new AID(sender,AID.ISLOCALNAME));
+			sendMsg.setSender(new AID(this.myAgent.getLocalName(),AID.ISLOCALNAME));
 			//System.out.println(this.myAgent.getLocalName() + " - I send " + sendMsg.toString());
 			((AbstractDedaleAgent) this.myAgent).sendMessage(sendMsg);
+			
 		}
+		
+		
 	}
 }
