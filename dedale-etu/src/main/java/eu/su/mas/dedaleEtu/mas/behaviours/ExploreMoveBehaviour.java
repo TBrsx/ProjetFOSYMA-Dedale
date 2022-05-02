@@ -106,7 +106,6 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				//Also have to add treasures if there are any
 				for( Couple<Observation, Integer> treatedObsTreasures : treatedObs.getRight()) {
 					if (treatedObsTreasures.getLeft().name().equalsIgnoreCase("Gold") || treatedObsTreasures.getLeft().name().equalsIgnoreCase("Diamond")) {
-						
 						this.myAgent.getMyMap().setTreasures(nodeId, treatedObsTreasures);
 					}
 				}

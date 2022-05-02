@@ -92,6 +92,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			for (String n : allNodes) {
 				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(n);
 				if (mapAtt.getTreasure().getLeft() != null) {
+					//TODO : See why sometime it's null when it shouldn't
 					if(mapAtt.getTreasure().getLeft() == Observation.DIAMOND) {
 						diamondNodes.add(Map.entry(n,mapAtt.getTreasure().getRight()));
 						totalDiamond += mapAtt.getTreasure().getRight();
@@ -103,7 +104,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			}
 			
 			Observation priority = totalDiamond > totalGold ? Observation.DIAMOND : Observation.GOLD;
-			
 			
 			
 			//Add this agent own capacities, and put it in its best role (gold or diamond collector, depending on the size of its backpack)
@@ -161,16 +161,21 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			for(String agent : agentsDiamondCapacity.keySet()) {
 				fillingRatioDiamond.put(agent, 0.0);
 				spaceRemaining.put(agent, agentsDiamondCapacity.get(agent));
+				elPlan.getDiamondCollectors().add(agent);
 			}
 			
 			for(String agent : agentsGoldCapacity.keySet()) {
 				fillingRatioGold.put(agent, 0.0);
 				spaceRemaining.put(agent, agentsGoldCapacity.get(agent));
+				elPlan.getGoldCollectors().add(agent);
 			}
 			
-			//Sort on capacities and amount to collect
+			//Sort on amount to collect
 			Collections.sort(diamondNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
 			Collections.sort(goldNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
+			
+			
+			
 			
 			//===What follows is O(n*k) where n is the number of nodes, k the number of agents. A bit expensive, but still manageable.
 			
@@ -232,6 +237,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			//===
 			
 			
+			
 			this.myAgent.setCurrentPlan(elPlan);
 			System.out.println(this.myAgent.getLocalName() + " - J'ai crée un plan, nommé " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
@@ -255,6 +261,12 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				this.myAgent.setPathToFollow(new LinkedList<String>());
 			}
 			this.myAgent.setNextPosition("");
+			if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
+				this.myAgent.setTreasureType(Observation.DIAMOND);
+			}
+			if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
+				this.myAgent.setTreasureType(Observation.GOLD);
+			}
 			this.returnCode = BEGIN_COLLECT;
 		}else {
 			this.moveToMeeting();
@@ -287,6 +299,12 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 					this.myAgent.setPathToFollow(new LinkedList<String>());
 				}
 				this.myAgent.setNextPosition("");
+				if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
+					this.myAgent.setTreasureType(Observation.DIAMOND);
+				}
+				if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
+					this.myAgent.setTreasureType(Observation.GOLD);
+				}
 				this.returnCode = BEGIN_COLLECT;
 			}
 		}

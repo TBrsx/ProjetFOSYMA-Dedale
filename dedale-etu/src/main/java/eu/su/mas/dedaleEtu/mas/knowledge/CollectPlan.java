@@ -9,6 +9,8 @@ public class CollectPlan implements Serializable{
 	private static final long serialVersionUID = -8140672521231830913L;
 	private String name;
 	private HashMap<String,MapAttributeCollect> nodes = new HashMap<String,MapAttributeCollect>();
+	private LinkedList<String> diamondCollectors = new LinkedList<String>();
+	private LinkedList<String> goldCollectors = new LinkedList<String>();
 
 	public CollectPlan(String name) {
 		this.name = name;
@@ -78,6 +80,22 @@ public class CollectPlan implements Serializable{
 			}
 		}
 		return returnedString.concat(gold + "\n" + diamond + "\n" + explorer);
+	}
+
+	public LinkedList<String> getDiamondCollectors() {
+		return diamondCollectors;
+	}
+
+	public void setDiamondCollectors(LinkedList<String> diamondCollectors) {
+		this.diamondCollectors = diamondCollectors;
+	}
+
+	public LinkedList<String> getGoldCollectors() {
+		return goldCollectors;
+	}
+
+	public void setGoldCollectors(LinkedList<String> goldCollectors) {
+		this.goldCollectors = goldCollectors;
 	}
 
 }

@@ -80,7 +80,7 @@ public class OtherAgent implements Serializable{
 			Node n = iter.next();
 			MapAttribute mapAtt = new MapAttribute((String)n.getAttribute("ui.class"),
 					(String)n.getAttribute("claimant"),
-					(String)n.getAttribute("occupied"),
+					(Boolean)n.getAttribute("blocked"),
 					(Couple<Observation, Integer>)n.getAttribute("treasure"),
 					(String) n.getAttribute("collector"));
 			sg.addNode(n.getId(),mapAtt);
