@@ -20,7 +20,7 @@ public class JobDoneBehaviour extends OneShotBehaviour {
 		while(true) {
 			System.out.println(this.myAgent.getLocalName() + " - Job Done !");
 			this.myAgent.doWait(3000);
-			this.myAgent.moveTo(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 1).get(1));
+			while(!this.myAgent.moveTo(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 1).get(1)));
 		}
 		
 	}
