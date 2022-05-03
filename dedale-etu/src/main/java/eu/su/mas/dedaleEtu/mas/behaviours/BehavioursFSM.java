@@ -168,7 +168,7 @@ public class BehavioursFSM extends FSMBehaviour {
 		// Init dataStore content 
 		getDataStore().put("movesWithoutSharing",0);
 		getDataStore().put("awareOfPlan", new LinkedList<String>());
-		getDataStore().put("decision-master", "1stAgent");
+		getDataStore().put("decision-master", "");
 	}
 
 }

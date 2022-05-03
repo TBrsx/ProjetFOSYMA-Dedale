@@ -84,7 +84,8 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			LinkedList<Map.Entry<String, Integer>> diamondNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<Map.Entry<String, Integer>> goldNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<String> blockedNodes = new LinkedList<String>();
-			CollectPlan elPlan = new CollectPlan("ElPlan");
+			CollectPlan elPlan = new CollectPlan("ElPlan_"+this.myAgent.getLocalName());
+			elPlan.setNodesInPlan(allNodes.size());
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
 			
@@ -239,7 +240,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			
 			this.myAgent.setCurrentPlan(elPlan);
-			System.out.println(this.myAgent.getLocalName() + " - J'ai crée un plan, nommé " + this.myAgent.getCurrentPlan().getName());
+			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
 			this.returnCode = PLAN_SHARING;
 		}else {

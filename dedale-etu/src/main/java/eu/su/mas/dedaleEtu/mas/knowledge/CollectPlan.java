@@ -11,6 +11,7 @@ public class CollectPlan implements Serializable{
 	private HashMap<String,MapAttributeCollect> nodes = new HashMap<String,MapAttributeCollect>();
 	private LinkedList<String> diamondCollectors = new LinkedList<String>();
 	private LinkedList<String> goldCollectors = new LinkedList<String>();
+	private int nodesInPlan = 0;
 
 	public CollectPlan(String name) {
 		this.name = name;
@@ -37,9 +38,11 @@ public class CollectPlan implements Serializable{
 			}
 		}
 		this.nodes.put(added.getId(),added);
+		this.nodesInPlan++;
 	}
 	public void removeNodeWithId(String id) {
 		this.nodes.remove(id);
+		this.nodesInPlan--;
 	}
 	
 	public LinkedList<String> getAttributedNodes(String askName) {
@@ -96,6 +99,14 @@ public class CollectPlan implements Serializable{
 
 	public void setGoldCollectors(LinkedList<String> goldCollectors) {
 		this.goldCollectors = goldCollectors;
+	}
+
+	public int getNodesInPlan() {
+		return nodesInPlan;
+	}
+
+	public void setNodesInPlan(int nodesInPlan) {
+		this.nodesInPlan = nodesInPlan;
 	}
 
 }

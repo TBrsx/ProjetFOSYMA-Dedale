@@ -276,6 +276,14 @@ public class MapRepresentation implements Serializable {
 		return computedList;
 	}
 	
+	public List<String> getBlockedNodes() {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> (Boolean) x.getAttribute("blocked") == true)
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
+	}
+	
 	public List<String> getTreasuresNodes(String treasure) {
 		List<String> computedList = this.g.nodes()
 				.filter(x -> ( (Couple<Observation,Integer>) x.getAttribute("treasure")).getLeft().getName().equalsIgnoreCase(treasure))
@@ -398,7 +406,7 @@ public class MapRepresentation implements Serializable {
 			addNode(n.getNodeId(),attributes);
 		}
 	}
-	//TODO : Done : state, claimant. Not done : ressources, occupied.
+	//TODO : Done : state, claimant. Not done : blocked. Need a synchronization
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			MapAttribute attributes = n.getNodeContent();

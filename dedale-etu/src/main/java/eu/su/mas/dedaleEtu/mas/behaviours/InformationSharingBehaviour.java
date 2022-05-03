@@ -77,7 +77,9 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			this.myAgent.getOtherAgents().get(receiver).setAlreadyMet(true);
 		}
 		//Map sharing
-		this.shareMap(receiver);
+		if(this.myAgent.getOtherAgents().get(receiver).getNodesToTransfer().size()>0) {
+			this.shareMap(receiver);
+		}
 		if(this.myAgent.getCurrentPlan() != null) {
 			this.sharePlan(receiver);
 		}
@@ -185,9 +187,13 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		//TODO : Handle more cases than AGREE
 		
 			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.AGREE),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
+					MessageTemplate.and(MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),MessageTemplate.MatchPerformative(ACLMessage.AGREE)),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
 			ACLMessage msgReceived = this.waitForMessage(msgTemplate, 200);
 			if(msgReceived == null) {
+				return;
+			}
+			
+			if(msgReceived.getPerformative() == ACLMessage.REFUSE) {
 				return;
 			}
 		
@@ -213,9 +219,19 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	}
 	
 	private void receivePlan(String sender, ACLMessage msgReceived) {
-		//Get name of plan and set it as my own
-		//TODO : If same plan, tell other agent to f*ck off
+		//If we got the same plan I don't need it to send it to me
+		if(this.myAgent.getCurrentPlan()!=null) {
+			if (msgReceived.getContent().equalsIgnoreCase(this.myAgent.getCurrentPlan().getName())){
+				ACLMessage msg = new ACLMessage(ACLMessage.REFUSE);
+				msg.setProtocol("SHARE-PLAN");
+				msg.setSender(this.myAgent.getAID());
+				msg.addReceiver(msgReceived.getSender());
+				this.myAgent.sendMessage(msg);
+			}
+		}
 		//TODO : If my plan is fresher, send him my plan instead
+		
+		//Get name of plan and set it as my own
 		ACLMessage msg = new ACLMessage(ACLMessage.AGREE);
 		msg.setProtocol("SHARE-PLAN");
 		msg.setSender(this.myAgent.getAID());
@@ -230,6 +246,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		if(msgReceived != null) {
 			try {
 				this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
+				getDataStore().put("decision-master", sender);
 				msg = new ACLMessage(ACLMessage.CONFIRM);
 				msg.setProtocol("SHARE-PLAN");
 				msg.setSender(this.myAgent.getAID());
