@@ -31,10 +31,10 @@ public class CollectBehavior extends OneShotBehaviour{
 	public void action() {
 		
 		
-		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
-			this.returnCode = DONE;
-			return;
-		}
+//		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
+//			this.returnCode = DONE;
+//			return;
+//		}
 		
 		try {
 			this.myAgent.doWait(500);

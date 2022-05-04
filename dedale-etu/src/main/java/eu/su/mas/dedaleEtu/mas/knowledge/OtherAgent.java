@@ -27,6 +27,7 @@ public class OtherAgent implements Serializable{
 	private int capaGold;
 	private CollectPlan currentPlan;
 	private boolean alreadyMet = false;
+	private boolean knownCapa = false;
 	private String meetingPoint = "";
 	
 	public OtherAgent(String name){
@@ -79,7 +80,7 @@ public class OtherAgent implements Serializable{
 			Node n = iter.next();
 			MapAttribute mapAtt = new MapAttribute((String)n.getAttribute("ui.class"),
 					(String)n.getAttribute("claimant"),
-					(String)n.getAttribute("occupied"),
+					(Boolean)n.getAttribute("blocked"),
 					(Couple<Observation, Integer>)n.getAttribute("treasure"),
 					(String) n.getAttribute("collector"));
 			sg.addNode(n.getId(),mapAtt);
@@ -155,5 +156,13 @@ public class OtherAgent implements Serializable{
 
 	public void setMeetingPoint(String meetingPoint) {
 		this.meetingPoint = meetingPoint;
+	}
+
+	public boolean isKnownCapa() {
+		return knownCapa;
+	}
+
+	public void setKnownCapa(boolean knownCapa) {
+		this.knownCapa = knownCapa;
 	}
 }

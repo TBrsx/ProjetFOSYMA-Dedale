@@ -106,13 +106,10 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				//Also have to add treasures if there are any
 				for( Couple<Observation, Integer> treatedObsTreasures : treatedObs.getRight()) {
 					if (treatedObsTreasures.getLeft().name().equalsIgnoreCase("Gold") || treatedObsTreasures.getLeft().name().equalsIgnoreCase("Diamond")) {
-						
 						this.myAgent.getMyMap().setTreasures(nodeId, treatedObsTreasures);
 					}
 				}
 			}
-			
-			
 
 			// 3) select next move
 
@@ -137,6 +134,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				//System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
 				this.myAgent.setNextPosition("");
 				this.myAgent.getPathToFollow().clear();
+				if(this.myAgent.getCurrentPlan()==null) {
+					getDataStore().put("decision-master", this.myAgent.getLocalName());
+				}
 				this.returnCode = NO_OPEN_NODE;
 				return; //No need to do the other moves
 			}

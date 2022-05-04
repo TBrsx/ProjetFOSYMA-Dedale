@@ -31,7 +31,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private LinkedList<String> pathToFollow = new LinkedList<String>();
 	private boolean isInterlocking = false;
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
-	private Observation treasureType = Observation.GOLD;
+	private Observation treasureType = null;
 	private int maxTreasureQuantity;
 	private CollectPlan currentPlan;
 	private String meetingPoint = "";
@@ -162,7 +162,11 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 			}
 
 			public void setTreasureType(Observation treasureType) {
-				this.treasureType = treasureType;
+				if(this.treasureType == null || treasureType == this.treasureType){
+					this.treasureType = treasureType;
+				}else {
+					System.out.println("Tried to change an agent treasureType that was alreadySet");
+				}
 			}
 
 			public int getMaxTreasureQuantity() {

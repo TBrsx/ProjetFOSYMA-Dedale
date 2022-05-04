@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -13,7 +14,7 @@ public class MapAttribute implements Serializable {
 
 
 	private String state; //open,closed
-	private String occupied; //wumpus
+	private boolean blocked; //wumpus
 	private String claimant; //name of agent that claimed it, empty string if none
 	private Couple<Observation,Integer> treasure;
 
@@ -21,14 +22,14 @@ public class MapAttribute implements Serializable {
 	public MapAttribute() {
 		this.state = "open";
 		this.claimant = "";
-		this.occupied = "";
+		this.blocked = false;
 		this.treasure = new Couple<Observation, Integer>(null, 0);
 	}
 
-	public MapAttribute(String state, String claimant, String occupied, Couple<Observation, Integer> treasure,String collector) {
+	public MapAttribute(String state, String claimant, Boolean blocked, Couple<Observation, Integer> treasure,String collector) {
 		this.state = state;
 		this.claimant = claimant;
-		this.occupied = occupied;
+		this.blocked = Optional.ofNullable(blocked).orElse(false);
 		this.treasure = treasure;
 	}
 
@@ -48,19 +49,19 @@ public class MapAttribute implements Serializable {
 		this.claimant = claimant;
 	}
 
-	public String getOccupied() {
-		return occupied;
-	}
-
-	public void setOccupied(String occupied) {
-		this.occupied = occupied;
-	}
-
 	public Couple<Observation, Integer> getTreasure() {
 		return treasure;
 	}
 
 	public void setTreasure(Couple<Observation,Integer> treasure) {
 		this.treasure = treasure;
+	}
+
+	public boolean isBlocked() {
+		return blocked;
+	}
+
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
 	}
 }

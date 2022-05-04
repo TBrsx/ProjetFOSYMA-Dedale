@@ -69,7 +69,7 @@ public class MapRepresentation implements Serializable {
 		Node treated = this.g.getNode(id);
 		MapAttribute returnedAttribute = new MapAttribute((String)treated.getAttribute("ui.class"),
 				(String)treated.getAttribute("claimant"),
-				(String)treated.getAttribute("occupied"),
+				Optional.ofNullable((Boolean)treated.getAttribute("blocked")).orElse(false),
 				(Couple<Observation, Integer>)treated.getAttribute("treasure"),
 				(String) treated.getAttribute("collector"));
 		return returnedAttribute;
@@ -106,7 +106,7 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.getState());
 		n.setAttribute("claimant", mapAttribute.getClaimant());
-		n.setAttribute("occupied", mapAttribute.getOccupied());
+		n.setAttribute("occupied", mapAttribute.isBlocked());
 		n.setAttribute("treasure", mapAttribute.getTreasure());
 
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
@@ -143,7 +143,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public synchronized Node addNewNode(String id, String claimant) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant, "", new Couple<Observation, Integer>(null, 0), "");
+			MapAttribute mapAtt = new MapAttribute("open", claimant, false, new Couple<Observation, Integer>(null, 0), "");
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -153,7 +153,7 @@ public class MapRepresentation implements Serializable {
 	//Same but also with blocked and treasure
 	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure,String collector) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant,occupied,treasure,collector);
+			MapAttribute mapAtt = new MapAttribute("open", claimant,false,treasure,collector);
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -271,6 +271,14 @@ public class MapRepresentation implements Serializable {
 	public List<String> getClaimedNodes(String askName) {
 		List<String> computedList = this.g.nodes()
 				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
+	}
+	
+	public List<String> getBlockedNodes() {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> (Boolean) x.getAttribute("blocked") == true)
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;
@@ -398,7 +406,7 @@ public class MapRepresentation implements Serializable {
 			addNode(n.getNodeId(),attributes);
 		}
 	}
-	//TODO : Done : state, claimant. Not done : ressources, occupied.
+	//TODO : Done : state, claimant. Not done : blocked. Need a synchronization
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			MapAttribute attributes = n.getNodeContent();
@@ -407,6 +415,15 @@ public class MapRepresentation implements Serializable {
 			Node nodeAdded = null;
 			nodeAdded = addNewNode(n.getNodeId(), claimant);
 			
+			//Treasures
+			
+			if(n.getNodeContent().getTreasure().getLeft()!=null) {
+				attributes.setTreasure(n.getNodeContent().getTreasure());
+			}
+			Couple<Observation,Integer> possibleTreasure = getMapAttributeFromNodeId(n.getNodeId()).getTreasure();
+			if(possibleTreasure.getLeft()!=null) {
+				attributes.setTreasure(possibleTreasure);
+			}
 			//If there is a claimant clash
 			if (( (String) this.g.getNode(n.getNodeId()).getAttribute("claimant")).equalsIgnoreCase(n.getNodeContent().getClaimant())){
 				claimant = this.settleClaims(this.g.getNode(n.getNodeId()), (String) this.g.getNode(n.getNodeId()).getAttribute("claimant"), n.getNodeContent().getClaimant());
@@ -416,12 +433,11 @@ public class MapRepresentation implements Serializable {
 			//check its state attribute. If I knew or just learned it was closed, it's now closed on my map. Otherwise, it's open.
 			if (((String) this.g.getNode(n.getNodeId()).getAttribute("ui.class")).equalsIgnoreCase("closed") || n.getNodeContent().getState().equalsIgnoreCase("closed")) {
 				attributes.setState("closed");
-				nodeAdded = addNode(n.getNodeId(), attributes);
 			}else {
 				attributes.setState("open");
-				nodeAdded = addNode(n.getNodeId(), attributes);
 			}
 			
+			nodeAdded = addNode(n.getNodeId(), attributes);
 			agent.addNodeOtherAgents(nodeAdded);
 		}
 
