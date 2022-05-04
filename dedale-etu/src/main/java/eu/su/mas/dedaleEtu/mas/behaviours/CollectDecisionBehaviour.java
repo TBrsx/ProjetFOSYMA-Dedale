@@ -93,7 +93,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			for (String n : allNodes) {
 				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(n);
 				if (mapAtt.getTreasure().getLeft() != null) {
-					//TODO : See why sometime it's null when it shouldn't
 					if(mapAtt.getTreasure().getLeft() == Observation.DIAMOND) {
 						diamondNodes.add(Map.entry(n,mapAtt.getTreasure().getRight()));
 						totalDiamond += mapAtt.getTreasure().getRight();
@@ -174,7 +173,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			//Sort on amount to collect
 			Collections.sort(diamondNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
 			Collections.sort(goldNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
-			
+			elPlan.saveNodes(diamondNodes,goldNodes);
 			
 			
 			
@@ -195,7 +194,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 				if(lowestRatio.getValue()<101) { //We did find an agent eligible
 					String chosenAgent = lowestRatio.getKey();
-					elPlan.addNode(new MapAttributeCollect(dN.getKey(),chosenAgent,"",""));
+					elPlan.addNode(new MapAttributeCollect(dN.getKey(),chosenAgent,""));
 					//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
 					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- dN.getValue());
 					Double newRatio = ((double) (agentsDiamondCapacity.get(chosenAgent)-spaceRemaining.get(chosenAgent)))/agentsDiamondCapacity.get(chosenAgent)*100;
@@ -207,12 +206,12 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 			}
 			
-			for(Map.Entry<String, Integer> dN : goldNodes) {
+			for(Map.Entry<String, Integer> gN : goldNodes) {
 				//Find the agent with the lowest ratio and the largest available space in case of a tie
 				Map.Entry<String, Double> lowestRatio = Map.entry("", 101.0);
 				int biggestSpaceRemaining = 0;
 				for(String agent : agentsGoldCapacity.keySet()) {
-					if (dN.getValue() < spaceRemaining.get(agent)){
+					if (gN.getValue() < spaceRemaining.get(agent)){
 						if (fillingRatioGold.get(agent)<lowestRatio.getValue() || 
 								(fillingRatioGold.get(agent) == lowestRatio.getValue() && spaceRemaining.get(agent) > biggestSpaceRemaining)){
 							lowestRatio = Map.entry(agent, fillingRatioGold.get(agent));
@@ -222,9 +221,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 				if(lowestRatio.getValue()<101) { //We did find an agent eligible
 					String chosenAgent = lowestRatio.getKey();
-					elPlan.addNode(new MapAttributeCollect(dN.getKey(),"",chosenAgent,""));
+					elPlan.addNode(new MapAttributeCollect(gN.getKey(),"",chosenAgent));
 					//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
-					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- dN.getValue());
+					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- gN.getValue());
 					Double newRatio = ((double) (agentsGoldCapacity.get(chosenAgent)-spaceRemaining.get(chosenAgent)))/agentsGoldCapacity.get(chosenAgent)*100;
 					if(newRatio>=100.0) {
 						agentsGoldCapacity.remove(chosenAgent);
@@ -236,7 +235,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		
 			
 			//===
-			
+			elPlan.saveRatios(fillingRatioDiamond, fillingRatioGold, agentsDiamondCapacity, agentsGoldCapacity);
 			this.myAgent.setCurrentPlan(elPlan);
 			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
