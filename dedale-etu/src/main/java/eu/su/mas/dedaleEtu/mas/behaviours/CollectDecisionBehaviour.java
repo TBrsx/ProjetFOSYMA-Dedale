@@ -237,8 +237,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			//===
 			
-			
-			
 			this.myAgent.setCurrentPlan(elPlan);
 			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
