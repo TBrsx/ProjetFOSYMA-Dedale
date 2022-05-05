@@ -112,7 +112,7 @@ public class CollectPlan implements Serializable{
 							String chosenAgent = lowestRatio.getKey();
 							this.removeNodeWithId(nodeId);
 							this.addNode(new MapAttributeCollect(dN.getKey(),chosenAgent,""));
-							//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
+							//Compute the remaining space and the ratio and if it is now at 100%, remove this agent from the list
 							int oldSpaceRemaining = this.spaceRemainingDiamond.get(chosenAgent);
 							this.spaceRemainingDiamond.put(chosenAgent, (int) this.spaceRemainingDiamond.get(chosenAgent)- dN.getValue());
 							Double newRatio = ((double) (this.fillingRatioDiamond.get(chosenAgent)*this.spaceRemainingDiamond.get(chosenAgent)/(float)oldSpaceRemaining));
@@ -140,7 +140,7 @@ public class CollectPlan implements Serializable{
 							String chosenAgent = lowestRatio.getKey();
 							this.removeNodeWithId(nodeId);
 							this.addNode(new MapAttributeCollect(gN.getKey(),"",chosenAgent));
-							//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
+							//Compute the remaining space and the ratio and if it is now at 100%, remove this agent from the list
 							int oldSpaceRemaining = this.spaceRemainingGold.get(chosenAgent);
 							this.spaceRemainingGold.put(chosenAgent, (int) this.spaceRemainingGold.get(chosenAgent)- gN.getValue());
 							Double newRatio = ((double) (this.fillingRatioGold.get(chosenAgent)*this.spaceRemainingGold.get(chosenAgent)/(float)oldSpaceRemaining));

@@ -45,7 +45,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 		if (this.myAgent.getMyMap() == null) {
 			this.myAgent.setMyMap(new MapRepresentation());
 		}
-
+		
 		// 0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
 		// If it's a new node we add it, otherwise do nothing
@@ -80,6 +80,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				this.myAgent.addNodeOtherAgents(added);
 				added = null;
 			}
+			this.getDataStore().put("CreateNewPlan", true); //Will probably already be true anyway
+
 			
 			// 2) get the surrounding nodes and, if not in closedNodes, add them to open
 			// nodes + claim them.

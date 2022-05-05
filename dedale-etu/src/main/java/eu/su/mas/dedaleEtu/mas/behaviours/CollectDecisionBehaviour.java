@@ -83,9 +83,8 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			LinkedList<Map.Entry<String, Integer>> diamondNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<Map.Entry<String, Integer>> goldNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<String> toExploreNodes = new LinkedList<String>();
-			int version = this.myAgent.getCurrentPlan() == null ? 0 : this.myAgent.getCurrentPlan().getVersion();
-			CollectPlan elPlan = new CollectPlan("ElPlan_"+version+1);
-			elPlan.setVersion(elPlan.getVersion()+1);
+			CollectPlan elPlan = new CollectPlan("ElPlan_"+"1");
+			elPlan.setVersion(1);
 			elPlan.setNodesInPlan(allNodes.size());
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
@@ -255,6 +254,18 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		
 		this.returnCode = PLAN_SHARING;
 	}
+	
+	private void adaptPlan() {
+		this.myAgent.getCurrentPlan().adaptPlan(this.myAgent.getMyMap(), (LinkedList<String>) this.getDataStore().get("awareOfPlan"),this.myAgent.getCurrentPlan());
+		LinkedList<String> experts = new LinkedList<String>();
+		experts.add(this.myAgent.getLocalName());
+		getDataStore().put("awareOfPlan",experts);
+		this.myAgent.getCurrentPlan().setVersion(this.myAgent.getCurrentPlan().getVersion()+1);
+		String truncatedName = this.myAgent.getCurrentPlan().getName().replaceAll("[0-9", "");
+		this.myAgent.getCurrentPlan().setName(truncatedName+this.myAgent.getCurrentPlan().getVersion()+1);
+		
+		System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
+	}
 
 	private void sharePlan() { //Move to/around the meeting point
 		
@@ -302,8 +313,13 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		this.myAgent.doWait(500);
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
-			if (this.myAgent.getCurrentPlan() == null){
-				this.createPlan();
+			if ((Boolean) this.getDataStore().get("CreateNewPlan")){
+				this.getDataStore().put("CreateNewPlan", false);
+				if(this.myAgent.getCurrentPlan() == null) {
+					this.createPlan();
+				}else {
+					this.adaptPlan();
+				}
 			}else {
 				this.sharePlan();
 			}
