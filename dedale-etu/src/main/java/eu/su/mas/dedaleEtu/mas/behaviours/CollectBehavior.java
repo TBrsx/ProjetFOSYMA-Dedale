@@ -31,7 +31,7 @@ public class CollectBehavior extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-		
+				
 		try {
 			this.myAgent.doWait(500);
 		} catch (Exception e) {

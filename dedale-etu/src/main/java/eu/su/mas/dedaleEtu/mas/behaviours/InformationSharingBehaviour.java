@@ -80,7 +80,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		if(this.myAgent.getOtherAgents().get(receiver).getNodesToTransfer().size()>0) {
 			this.shareMap(receiver);
 		}
-		if(this.myAgent.getCurrentPlan() != null) {
+		if(this.myAgent.getCurrentPlan() != null && ((String) this.getDataStore().get("decision-master")).equalsIgnoreCase(this.myAgent.getLocalName())) {
 			this.sharePlan(receiver);
 		}
 		
