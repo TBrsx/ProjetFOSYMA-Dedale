@@ -26,7 +26,7 @@ public class MapAttribute implements Serializable {
 		this.treasure = new Couple<Observation, Integer>(null, 0);
 	}
 
-	public MapAttribute(String state, String claimant, Boolean blocked, Couple<Observation, Integer> treasure,String collector) {
+	public MapAttribute(String state, String claimant, Boolean blocked, Couple<Observation, Integer> treasure) {
 		this.state = state;
 		this.claimant = claimant;
 		this.blocked = Optional.ofNullable(blocked).orElse(false);

@@ -81,8 +81,7 @@ public class OtherAgent implements Serializable{
 			MapAttribute mapAtt = new MapAttribute((String)n.getAttribute("ui.class"),
 					(String)n.getAttribute("claimant"),
 					(Boolean)n.getAttribute("blocked"),
-					(Couple<Observation, Integer>)n.getAttribute("treasure"),
-					(String) n.getAttribute("collector"));
+					(Couple<Observation, Integer>)n.getAttribute("treasure"));
 			sg.addNode(n.getId(),mapAtt);
 		}
 		Iterator<Edge> iterE = this.edgesToTransfer.iterator();

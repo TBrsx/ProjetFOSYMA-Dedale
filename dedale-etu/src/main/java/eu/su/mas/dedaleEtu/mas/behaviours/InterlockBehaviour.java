@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -57,7 +58,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	}
 
 	private void continuePath() {
-		this.myAgent.doWait(500);
+		this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 
 		// Receive the target from the other agent
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-TARGET"),
@@ -75,7 +76,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			} else {
 				cpt++;
 			}
-			this.myAgent.doWait(500);
+			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		}
 		msg = setupMessage(new ACLMessage(ACLMessage.INFORM), null, "-FINISHED");
 		this.myAgent.send(msg);
@@ -163,12 +164,16 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		this.myAgent.moveTo(nextPos);
 		int cpt = 0;
 		while (!this.myAgent.getCurrentPosition().equals(nextPos) && cpt < 10) {
-			this.myAgent.doWait(500);
+			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 			this.myAgent.moveTo(nextPos);
 			cpt++;
 		}
 		if (cpt >= 10) {
-			this.myAgent.getMyMap().getMapAttributeFromNodeId(nextPos).setBlocked(true);
+			MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(nextPos);
+			mapAtt.setBlocked(true);
+			this.myAgent.getMyMap().addNode(nextPos, mapAtt);
+			this.myAgent.getPathToFollow().clear();
+			this.myAgent.setNextPosition("");
 		}
 		log("Backtracked one more time, final position: " + this.myAgent.getCurrentPosition());
 		this.myAgent.doWait(2000);
@@ -183,16 +188,20 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			log("Next backtracking target: " + pos + ", status: " + moveSuccess);
 			int cpt = 0;
 			while (!moveSuccess && cpt < 5) {
-				this.myAgent.doWait(500);
+				this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 				this.myAgent.moveTo(pos);
 				moveSuccess = this.myAgent.getCurrentPosition().equals(pos);
 				cpt++;
 			}
 			if (cpt >= 5) {
-				this.myAgent.getMyMap().getMapAttributeFromNodeId(pos).setBlocked(true);
+				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(pos);
+				mapAtt.setBlocked(true);
+				this.myAgent.getMyMap().addNode(pos, mapAtt);
+				this.myAgent.getPathToFollow().clear();
+				this.myAgent.setNextPosition("");
 				return;
 			}
-			this.myAgent.doWait(500);
+			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		}
 		log("Backtracking done, final position: " + this.myAgent.getCurrentPosition() + ", target: " + this.myAgent.getTargetPosition());
 	}
@@ -205,6 +214,8 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		// Override potential error in selection of sender/receiver
 		// Not optimal
 		log("Starts interlocking behavior");
@@ -229,6 +240,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 				ACLMessage msgReceived = (ACLMessage) this.getDataStore().get("received-message");
 				if (msgReceived == null) {
 					return;
+					
 				}
 				data = msgReceived.getContent().split(",");
 				this.receiver = msgReceived.getSender().getLocalName();
@@ -296,7 +308,12 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			if (msgReceived == null || msgReceived.getPerformative() == ACLMessage.DISCONFIRM) {
 				log("No one is interlocked with me");
 				log("Stopped interlocking behavior");
-				this.myAgent.doWait(500);
+				this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
+				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(this.myAgent.getNextPosition());
+				mapAtt.setBlocked(true);
+				this.myAgent.getMyMap().addNode(this.myAgent.getNextPosition(), mapAtt);
+				this.myAgent.getPathToFollow().clear();
+				this.myAgent.setNextPosition("");
 				return;
 			}
 			this.myAgent.setInterlocking(true);
@@ -326,5 +343,10 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			this.myAgent.setInterlocking(false);
 			log("Interlocking behavior ended, position is " + this.myAgent.getCurrentPosition() + ", next position is " + this.myAgent.getPathToFollow());
 		}
+	}
+	
+	public int onEnd() {
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+		return 0;
 	}
 }

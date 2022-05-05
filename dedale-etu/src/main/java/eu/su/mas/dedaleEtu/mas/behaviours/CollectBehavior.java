@@ -33,7 +33,7 @@ public class CollectBehavior extends OneShotBehaviour{
 	public void action() {
 				
 		try {
-			this.myAgent.doWait(500);
+			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

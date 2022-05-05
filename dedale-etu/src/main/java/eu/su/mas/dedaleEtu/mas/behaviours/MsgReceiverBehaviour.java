@@ -27,6 +27,8 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 
 	public void action() {
 
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		// ==== Messages that calls for a change of state====
 		// First one read is the one treated
 		ACLMessage msgReceived = null;
@@ -62,7 +64,8 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 			}
 			
 		}
-		
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+
 	}
 
 	public int onEnd() {

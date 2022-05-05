@@ -42,10 +42,12 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		if (this.myAgent.getMyMap() == null) {
 			this.myAgent.setMyMap(new MapRepresentation());
 		}
-		
+
 		// 0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
 		// If it's a new node we add it, otherwise do nothing
@@ -54,6 +56,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 			this.myAgent.addNodeOtherAgents(added);
 			added = null;
 			}
+		MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(myPosition);
+		mapAtt.setBlocked(false);
+		this.myAgent.getMyMap().addNode(myPosition, mapAtt);
 
 		if (myPosition != null) {
 			// List of observable from the agent's current position
@@ -61,7 +66,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 					.observe();
 
 			try {
-				this.myAgent.doWait(500);
+				this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -102,7 +107,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 						this.myAgent.addNodeOtherAgents(addedE.getNode0());
 						this.myAgent.addNodeOtherAgents(addedE.getNode1());
 					}
-					if (nextNode == null && added != null)
+					if (nextNode == null && added != null && !this.myAgent.getMyMap().getMapAttributeFromNodeId(added.getId()).isBlocked())
 						nextNode = nodeId;
 				}
 				//Also have to add treasures if there are any
@@ -115,8 +120,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 			// 3) select next move
 
-			// 3.1) If there exist one open node directly reachable, go for it, add the current position to
-			// the head of the path the agent wanted to take
+			// 3.1) If there exist one open node directly reachable, go for it, add the current position to the head of the path the agent wanted to take
 			if (nextNode != null) {
 				this.myAgent.getPathToFollow().addFirst(myPosition);
 
@@ -127,8 +131,10 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				// 3.3) Otherwise choose the closest open node if there is one
 			} else if (this.myAgent.getMyMap().hasOpenNodeNotBlocked()) {
 				// Compute the path and take the first step
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNodeNotBlocked(myPosition,
-						this.myAgent.getLocalName()));
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNodeNotBlocked(myPosition,this.myAgent.getLocalName()));
+				if(this.myAgent.getPathToFollow() == null) {
+					this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNode(myPosition,this.myAgent.getLocalName()));
+				}
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
 			} else {
@@ -152,22 +158,29 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 //					System.out.println(this.myAgent.getLocalName() + "- Edges to share " + agent.getEdgesToTransfer().toString());
 //				}
 				
-				if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
-					this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
-					if(this.wasBlocked) {
-						this.returnCode = INTERLOCKING;
-					}else {
-						this.returnCode = MAYBE_BLOCKED;
-					}
+				if(this.myAgent.getMyMap().getMapAttributeFromNodeId(nextNode).isBlocked()) {
+					this.myAgent.setNextPosition("");
+					this.myAgent.getPathToFollow().clear();
 				}else {
-					getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
-					this.returnCode = SUCCESS;
+					if (!((AbstractDedaleAgent) this.myAgent).moveTo(this.myAgent.getNextPosition())) {
+						this.myAgent.getPathToFollow().addFirst(this.myAgent.getNextPosition());
+						if(this.wasBlocked) {
+							this.returnCode = INTERLOCKING;
+						}else {
+							this.returnCode = MAYBE_BLOCKED;
+						}
+					}else {
+						getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
+						this.returnCode = SUCCESS;
+					}
 				}
 			}
 		}
 	}
 
 	public int onEnd() {
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " " + this.myAgent.getPathToFollow());
+
 		return this.returnCode;
 	}
 

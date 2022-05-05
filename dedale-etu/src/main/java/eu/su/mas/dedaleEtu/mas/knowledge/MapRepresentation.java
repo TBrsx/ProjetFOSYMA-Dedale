@@ -68,10 +68,9 @@ public class MapRepresentation implements Serializable {
 		Node treated = this.g.getNode(id);
 		MapAttribute returnedAttribute = new MapAttribute((String)treated.getAttribute("ui.class"),
 				(String)treated.getAttribute("claimant"),
-				Optional.ofNullable((Boolean)treated.getAttribute("blocked")).orElse(false),
-				(Couple<Observation, Integer>)treated.getAttribute("treasure"),
-				(String) treated.getAttribute("collector"));
-		return returnedAttribute;
+				(Boolean)treated.getAttribute("blocked"),
+				(Couple<Observation, Integer>)treated.getAttribute("treasure"));
+				return returnedAttribute;
 	}
 
 
@@ -105,7 +104,7 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.getState());
 		n.setAttribute("claimant", mapAttribute.getClaimant());
-		n.setAttribute("occupied", mapAttribute.isBlocked());
+		n.setAttribute("blocked", mapAttribute.isBlocked());
 		n.setAttribute("treasure", mapAttribute.getTreasure());
 
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
@@ -142,7 +141,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	public synchronized Node addNewNode(String id, String claimant) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant, false, new Couple<Observation, Integer>(null, 0), "");
+			MapAttribute mapAtt = new MapAttribute("open", claimant, false, new Couple<Observation, Integer>(null, 0));
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -150,9 +149,9 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	//Same but also with blocked and treasure
-	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure,String collector) {
+	public synchronized Node addNewNode(String id, String claimant,String occupied,Couple<Observation, Integer> treasure) {
 		if (this.g.getNode(id) == null) {
-			MapAttribute mapAtt = new MapAttribute("open", claimant,false,treasure,collector);
+			MapAttribute mapAtt = new MapAttribute("open", claimant,false,treasure);
 			Node added = addNode(id, mapAtt);
 			return added;
 		}
@@ -169,6 +168,8 @@ public class MapRepresentation implements Serializable {
 		}
 		return false;
 	}
+	
+	
 
 	/**
 	 * Add an undirect edge if not already existing.
@@ -313,7 +314,7 @@ public class MapRepresentation implements Serializable {
 				.filter(x -> x.getAttribute("ui.class") == "open")
 				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName)
 						|| x.getAttribute("claimant").toString().equalsIgnoreCase(""))
-				.filter(x -> !getMapAttributeFromNodeId(x.getId()).isBlocked())
+				.filter(x -> !((Boolean) x.getAttribute("blocked")))
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		if (computedList.isEmpty()) {
@@ -335,7 +336,7 @@ public class MapRepresentation implements Serializable {
 	
 	public List<String> getBlockedNodes() {
 		List<String> computedList = this.g.nodes()
-				.filter(x -> getMapAttributeFromNodeId(x.getId()).isBlocked())
+				.filter(x -> ((Boolean) x.getAttribute("blocked")))
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;
@@ -521,7 +522,7 @@ public class MapRepresentation implements Serializable {
 	public boolean hasOpenNodeNotBlocked() {
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class") == "open")
-				.filter(n -> !getMapAttributeFromNodeId(n.getId()).isBlocked())
+				.filter(n -> !((Boolean) n.getAttribute("blocked")))
 				.findAny()).isPresent();
 	}
 	

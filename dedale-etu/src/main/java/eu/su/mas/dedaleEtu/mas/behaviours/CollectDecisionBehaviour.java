@@ -39,10 +39,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private void moveToMeeting() {
 		String meeting = this.myAgent.getMeetingPoint();
 		if (this.myAgent.getPathToFollow().isEmpty()){
-			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 3));
+			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 10));
 			if(this.myAgent.getCurrentPosition().equalsIgnoreCase(meeting)) { //If I am at the meeting point
 				getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
-
 			}else {
 				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPath(this.myAgent.getCurrentPosition(), meeting));			
 			}
@@ -86,6 +85,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			CollectPlan elPlan = new CollectPlan("ElPlan_"+"1");
 			elPlan.setVersion(1);
 			elPlan.setNodesInPlan(allNodes.size());
+			if(!this.myAgent.getMyMap().hasOpenNode()) {
+				elPlan.setComplete(true);
+			}
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
 			
@@ -107,7 +109,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			}
 			
 			Observation priority = totalDiamond > totalGold ? Observation.DIAMOND : Observation.GOLD;
-			
 			
 			//Add this agent own capacities, and put it in its best role (gold or diamond collector, depending on the size of its backpack)
 			List<Couple<Observation, Integer>> bp = this.myAgent.getBackPackFreeSpace();
@@ -155,6 +156,19 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			}
 			if(agentsGoldCapacity.isEmpty()) {
 				agentsGoldCapacity.put(bestCollectorG.getKey(),bestCollectorG.getValue());
+			}
+			
+			if(elPlan.isComplete()) {
+				if(totalDiamond < 1) {
+					for(String agent : agentsDiamondCapacity.keySet()) {
+						agentsGoldCapacity.put(agent, this.myAgent.getOtherAgents().get(agent).getCapaGold());
+					}
+				}
+				if(totalGold < 1) {
+					for(String agent : agentsGoldCapacity.keySet()) {
+						agentsDiamondCapacity.put(agent, this.myAgent.getOtherAgents().get(agent).getCapaDiamond());
+					}
+				}
 			}
 			
 			HashMap<String,Double> fillingRatioDiamond = new HashMap<String,Double>();
@@ -239,9 +253,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			//===
 			elPlan.saveRatios(fillingRatioDiamond, fillingRatioGold, agentsDiamondCapacity, agentsGoldCapacity);
 			elPlan.setNodesToExplore(toExploreNodes);
-			if(!this.myAgent.getMyMap().hasOpenNode()) {
-				elPlan.setComplete(true);
-			}
 			this.myAgent.setCurrentPlan(elPlan);
 			
 			
@@ -256,6 +267,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	}
 	
 	private void adaptPlan() {
+		if(!this.myAgent.getMyMap().hasOpenNode()) {
+			this.myAgent.getCurrentPlan().setComplete(true);
+		}
 		this.myAgent.getCurrentPlan().adaptPlan(this.myAgent.getMyMap(), (LinkedList<String>) this.getDataStore().get("awareOfPlan"),this.myAgent.getCurrentPlan());
 		LinkedList<String> experts = new LinkedList<String>();
 		experts.add(this.myAgent.getLocalName());
@@ -274,6 +288,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		if (experts.size() >= this.myAgent.getOtherAgents().size()+1) {
 			startCollect();
 		}else {
+			System.out.println(experts);
 			this.moveToMeeting();
 			this.returnCode = PLAN_SHARING;
 		}
@@ -310,7 +325,8 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	
 	@Override
 	public void action() {
-		this.myAgent.doWait(500);
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
 			if ((Boolean) this.getDataStore().get("CreateNewPlan")){
@@ -327,13 +343,15 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			if (this.myAgent.getCurrentPlan() == null){
 				this.searchPlan();
 			}else {
-				startCollect();
+				this.startCollect();
 			}
 		}
 	}
 	
 	public int onEnd() {
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode + " moves " + (int) getDataStore().get("movesWithoutSharing"));
 		return this.returnCode;
+
 	}
 
 }

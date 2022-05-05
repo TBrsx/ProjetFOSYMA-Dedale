@@ -318,6 +318,8 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	
 	@Override
 	public void action() {
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		//Reset number of moves we did without sharing
 		getDataStore().put("movesWithoutSharing", 0);
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
@@ -344,7 +346,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			while(true) { //Do while, ugly
 				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INFOSHARE"),
 						MessageTemplate.MatchPerformative(ACLMessage.AGREE));
-				this.msgReceived = this.messageTimeout(msgTemplate, 600);
+				this.msgReceived = this.messageTimeout(msgTemplate, ((int) this.getDataStore().get("waitingTime"))*3);
 				if (this.msgReceived == null) {
 					return; //exit the while loop as no one seems to be there
 					}
@@ -460,6 +462,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			
 		}
 		
-		
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+
 	}
 }
