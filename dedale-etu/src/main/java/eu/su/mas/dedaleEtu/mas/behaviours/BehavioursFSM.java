@@ -154,8 +154,10 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerDefaultTransition("infoSharingEmitter2", "msgReceiver2");
 		
 		this.registerTransition("Collect", "msgReceiver3", 0);
-		this.registerTransition("Collect", "jobDone", 1);
+		this.registerTransition("Collect", "msgReceiver", 1);
 		this.registerTransition("Collect","interlockEmitter3",2);
+		this.registerTransition("Collect", "jobDone", 3);
+
 		
 		this.registerTransition("msgReceiver3", "Collect", 0);
 		this.registerTransition("msgReceiver3", "Collect", 1);

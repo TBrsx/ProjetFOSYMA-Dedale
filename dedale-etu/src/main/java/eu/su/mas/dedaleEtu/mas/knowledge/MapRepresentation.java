@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.ElementNotFoundException;
@@ -248,6 +247,21 @@ public class MapRepresentation implements Serializable {
 		return shortestPath;
 	}
 
+	public LinkedList<String> getShortestPathToClosestOpenNodeNotBlocked(String myPosition, String askName) {
+		//1) Get all openNodes
+		List<String> opennodes = getOpenNodesNotBlocked(askName);
+		//2) select the closest one that is
+		List<Couple<String, Integer>> lc =
+				opennodes.stream()
+						.map(on -> (getShortestPath(myPosition, on) != null) ? new Couple<String, Integer>(on, getShortestPath(myPosition, on).size()) : new Couple<String, Integer>(on, Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+						.collect(Collectors.toList());
+
+		Optional<Couple<String, Integer>> closest = lc.stream().min(Comparator.comparing(Couple::getRight));
+		//3) Compute shorterPath
+
+		return getShortestPath(myPosition, closest.get().getLeft());
+	}
+	
 	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition, String askName) {
 		//1) Get all openNodes
 		List<String> opennodes = getOpenNodes(askName);
@@ -294,6 +308,23 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 	
+	public List<String> getOpenNodesNotBlocked(String askName) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> x.getAttribute("ui.class") == "open")
+				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName)
+						|| x.getAttribute("claimant").toString().equalsIgnoreCase(""))
+				.filter(x -> !getMapAttributeFromNodeId(x.getId()).isBlocked())
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		if (computedList.isEmpty()) {
+			return this.g.nodes().filter(x -> x.getAttribute("ui.class") == "open")
+					.map(Node::getId)
+					.collect(Collectors.toList());
+		} else {
+			return computedList;
+		}
+	}
+	
 	public List<String> getClaimedNodes(String askName) {
 		List<String> computedList = this.g.nodes()
 				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
@@ -304,7 +335,7 @@ public class MapRepresentation implements Serializable {
 	
 	public List<String> getBlockedNodes() {
 		List<String> computedList = this.g.nodes()
-				.filter(x -> (Boolean) x.getAttribute("blocked") == true)
+				.filter(x -> getMapAttributeFromNodeId(x.getId()).isBlocked())
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;
@@ -485,6 +516,12 @@ public class MapRepresentation implements Serializable {
 	public boolean hasOpenNode() {
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class") == "open")
+				.findAny()).isPresent();
+	}
+	public boolean hasOpenNodeNotBlocked() {
+		return (this.g.nodes()
+				.filter(n -> n.getAttribute("ui.class") == "open")
+				.filter(n -> !getMapAttributeFromNodeId(n.getId()).isBlocked())
 				.findAny()).isPresent();
 	}
 	

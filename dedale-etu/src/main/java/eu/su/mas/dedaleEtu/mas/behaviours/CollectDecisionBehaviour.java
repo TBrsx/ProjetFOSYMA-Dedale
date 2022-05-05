@@ -240,6 +240,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			//===
 			elPlan.saveRatios(fillingRatioDiamond, fillingRatioGold, agentsDiamondCapacity, agentsGoldCapacity);
 			elPlan.setNodesToExplore(toExploreNodes);
+			if(!this.myAgent.getMyMap().hasOpenNode()) {
+				elPlan.setComplete(true);
+			}
 			this.myAgent.setCurrentPlan(elPlan);
 			
 			

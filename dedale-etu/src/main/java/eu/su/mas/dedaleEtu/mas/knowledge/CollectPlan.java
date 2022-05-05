@@ -62,6 +62,7 @@ public class CollectPlan implements Serializable{
 			}
 		}
 		partOfPlan.setNodesToExplore(this.nodesToExplore);
+		partOfPlan.setComplete(isComplete);
 		return partOfPlan;
 	}
 	

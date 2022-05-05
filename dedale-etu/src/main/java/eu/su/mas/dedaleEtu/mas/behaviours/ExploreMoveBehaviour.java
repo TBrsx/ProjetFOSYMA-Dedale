@@ -123,9 +123,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
 				// 3.3) Otherwise choose the closest open node if there is one
-			} else if (this.myAgent.getMyMap().hasOpenNode()) {
+			} else if (this.myAgent.getMyMap().hasOpenNodeNotBlocked()) {
 				// Compute the path and take the first step
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNode(myPosition,
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNodeNotBlocked(myPosition,
 						this.myAgent.getLocalName()));
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
