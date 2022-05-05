@@ -15,6 +15,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	private final ExploreCoopAgent myAgent;
 	private String receiver;
 	private boolean isReceiver;
+	private boolean verboseMode = false;
 
 	/**
 	 * The agent and receiver debates about which agent as to move backward
@@ -57,7 +58,6 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	private void continuePath() {
 		this.myAgent.doWait(500);
-		System.out.println(this.myAgent.getLocalName() + " starts to move.");
 
 		// Receive the target from the other agent
 		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-TARGET"),
@@ -89,7 +89,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		this.myAgent.sendMessage(msg);
 
 		// Backtrack to the target
-		System.out.println(this.myAgent.getLocalName() + " begins backtracking to " + path + ".");
+		log(" begins backtracking to " + path);
 		moveTo(path);
 		waitForMessage(MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING-FINISHED"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM)), true);
@@ -117,8 +117,9 @@ public class InterlockBehaviour extends OneShotBehaviour {
 				.getNearestFork(this.myAgent.getNextPosition(), this.myAgent.getCurrentPosition(), otherAgentPath);
 		log("Backtracking path: " + path);
 
+		int pathSize = path.size() == 0 ? Integer.MAX_VALUE : path.size();
 		// Send the backtracking path to the receiver
-		String content = path.size() == 0 ? Integer.toString(Integer.MAX_VALUE) : Integer.toString(path.size());
+		String content = Integer.toString(pathSize);
 		log("Sending backtracking path length to " + receiver + ": " + content);
 		msg = setupMessage(new ACLMessage(ACLMessage.INFORM), content, "-PATH_SIZE");
 		this.myAgent.sendMessage(msg);
@@ -132,7 +133,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 
 		// Choose which agent has to move backward
-		if (otherAgentPathSize < path.size() || (otherAgentPathSize <= path.size() && isReceiver)) {
+		if (otherAgentPathSize < pathSize || (otherAgentPathSize <= pathSize && isReceiver)) {
 			log("I'm the one to move forward.");
 			continuePath();
 		} else {
@@ -166,6 +167,9 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			this.myAgent.moveTo(nextPos);
 			cpt++;
 		}
+		if (cpt >= 10) {
+			this.myAgent.getMyMap().getMapAttributeFromNodeId(nextPos).setBlocked(true);
+		}
 		log("Backtracked one more time, final position: " + this.myAgent.getCurrentPosition());
 		this.myAgent.doWait(2000);
 	}
@@ -184,14 +188,19 @@ public class InterlockBehaviour extends OneShotBehaviour {
 				moveSuccess = this.myAgent.getCurrentPosition().equals(pos);
 				cpt++;
 			}
-			if (cpt >= 5) return;
+			if (cpt >= 5) {
+				this.myAgent.getMyMap().getMapAttributeFromNodeId(pos).setBlocked(true);
+				return;
+			}
 			this.myAgent.doWait(500);
 		}
 		log("Backtracking done, final position: " + this.myAgent.getCurrentPosition() + ", target: " + this.myAgent.getTargetPosition());
 	}
 
 	private void log(String msg) {
-		System.out.println(this.myAgent.getLocalName() + ": " + msg + ".");
+		if (verboseMode) {
+			System.out.println(this.myAgent.getLocalName() + ": " + msg + ".");
+		}
 	}
 
 	@Override
@@ -232,9 +241,8 @@ public class InterlockBehaviour extends OneShotBehaviour {
 				msg = setupMessage(new ACLMessage(ACLMessage.CONFIRM), null, "-START");
 				log("I'm interlocked with " + this.receiver);
 			} else {
-				log("I'm not interlocked with " + this.receiver);
 				msg = setupMessage(new ACLMessage(ACLMessage.DISCONFIRM), null, "-START");
-				System.out.println(this.myAgent.getLocalName() + " isn't interlocked.");
+				log("I'm not interlocked with " + this.receiver);
 			}
 			this.myAgent.sendMessage(msg);
 			log("Sent its reply about interlocking");
@@ -288,6 +296,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			if (msgReceived == null || msgReceived.getPerformative() == ACLMessage.DISCONFIRM) {
 				log("No one is interlocked with me");
 				log("Stopped interlocking behavior");
+				this.myAgent.doWait(500);
 				return;
 			}
 			this.myAgent.setInterlocking(true);
@@ -315,7 +324,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 				alreadyInterlocked();
 			}
 			this.myAgent.setInterlocking(false);
-			log("Interlocking behavior ended");
+			log("Interlocking behavior ended, position is " + this.myAgent.getCurrentPosition() + ", next position is " + this.myAgent.getPathToFollow());
 		}
 	}
 }
