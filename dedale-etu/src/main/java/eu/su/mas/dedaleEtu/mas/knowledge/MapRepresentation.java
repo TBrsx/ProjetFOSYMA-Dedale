@@ -193,27 +193,53 @@ public class MapRepresentation implements Serializable {
 		}
 		return e;
 	}
-
-	/**
-	 * Compute the shortest Path from idFrom to IdTo. The computation is currently not very efficient
-	 *
-	 * @param idFrom id of the origin node
-	 * @param idTo   id of the destination node
-	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
-	 */
+	
+	public synchronized LinkedList<String> getAdjacentsNodes(String center){
+		Iterator<Edge> edges = g.getNode(center).edges().iterator();
+		LinkedList<String> nodes = new LinkedList<String>();
+		while (edges.hasNext()) {
+			Edge e = edges.next();
+			String tNode = e.getTargetNode().getId();
+			String sNode = e.getSourceNode().getId();
+			if (!tNode.equals(center)) {
+				nodes.add(tNode);
+			} else if (!sNode.equals(center)) {
+				nodes.add(sNode);
+			}
+		}
+		return nodes;
+	}
+	
+	//BFS
 	public synchronized LinkedList<String> getShortestPath(String idFrom, String idTo) {
 		LinkedList<String> shortestPath = new LinkedList<String>();
-
-		Dijkstra dijkstra = new Dijkstra();//number of edge
-		dijkstra.init(g);
-		dijkstra.setSource(g.getNode(idFrom));
-		dijkstra.compute();//compute the distance to all nodes from idFrom
-		List<Node> path = dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
-		Iterator<Node> iter = path.iterator();
-		while (iter.hasNext()) {
-			shortestPath.add(iter.next().getId());
+		HashMap<String,String> parents = new HashMap<String,String>();
+		Queue<String> bfsQ = new LinkedList<String>();
+		Set<String> visited = new HashSet<String>();
+		parents.put(idFrom, null);
+		bfsQ.add(idFrom);
+		visited.add(idFrom);
+		while(!bfsQ.isEmpty()) {
+			String node = bfsQ.remove();
+			if(node.equalsIgnoreCase(idTo)) {
+				String parent = node;
+				while(parent!=null) {
+					shortestPath.addFirst(parent);
+					parent = parents.get(parent);
+				}
+			}else {
+				for(String adjNode : getAdjacentsNodes(node)) {
+					if(!visited.contains(adjNode)) { //Hash based so constant
+						if(!getMapAttributeFromNodeId(adjNode).isBlocked()) {
+							visited.add(adjNode);
+							bfsQ.add(adjNode);
+							parents.put(adjNode, node);
+						}
+					}
+				}
+			}
 		}
-		dijkstra.clear();
+		
 		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
 			return null;
 		} else {
