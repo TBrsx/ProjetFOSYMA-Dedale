@@ -8,12 +8,10 @@ public class MapAttributeCollect implements Serializable{
 	private String id;
 	private String diamondCollector; //Name of agent that is tasked to collecting diamond on this node
 	private String goldCollector; //Name of agent that is tasked to collecting gold on this node
-	private String explorer; //Name of agent that has been tasked to look for changes on this node
 	
-	public MapAttributeCollect(String id,String diamondCollector,String goldCollector, String explorer) {
+	public MapAttributeCollect(String id,String diamondCollector,String goldCollector) {
 		this.diamondCollector = diamondCollector;
 		this.goldCollector = goldCollector;
-		this.explorer = explorer;
 		this.id = id;
 	}
 
@@ -33,13 +31,6 @@ public class MapAttributeCollect implements Serializable{
 		this.goldCollector = goldCollector;
 	}
 
-	public String getExplorer() {
-		return explorer;
-	}
-
-	public void setExplorer(String explorer) {
-		this.explorer = explorer;
-	}
 
 	public String getId() {
 		return id;

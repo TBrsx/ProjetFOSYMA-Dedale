@@ -45,7 +45,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 		if (this.myAgent.getMyMap() == null) {
 			this.myAgent.setMyMap(new MapRepresentation());
 		}
-
+		
 		// 0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent) this.myAgent).getCurrentPosition();
 		// If it's a new node we add it, otherwise do nothing
@@ -80,6 +80,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				this.myAgent.addNodeOtherAgents(added);
 				added = null;
 			}
+			this.getDataStore().put("CreateNewPlan", true); //Will probably already be true anyway
+
 			
 			// 2) get the surrounding nodes and, if not in closedNodes, add them to open
 			// nodes + claim them.
@@ -123,9 +125,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
 				// 3.3) Otherwise choose the closest open node if there is one
-			} else if (this.myAgent.getMyMap().hasOpenNode()) {
+			} else if (this.myAgent.getMyMap().hasOpenNodeNotBlocked()) {
 				// Compute the path and take the first step
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNode(myPosition,
+				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNodeNotBlocked(myPosition,
 						this.myAgent.getLocalName()));
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
@@ -134,9 +136,6 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				//System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
 				this.myAgent.setNextPosition("");
 				this.myAgent.getPathToFollow().clear();
-				if(this.myAgent.getCurrentPlan()==null) {
-					getDataStore().put("decision-master", this.myAgent.getLocalName());
-				}
 				this.returnCode = NO_OPEN_NODE;
 				return; //No need to do the other moves
 			}

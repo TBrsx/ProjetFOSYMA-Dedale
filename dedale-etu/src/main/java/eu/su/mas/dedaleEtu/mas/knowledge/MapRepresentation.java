@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.ElementNotFoundException;
@@ -193,27 +192,53 @@ public class MapRepresentation implements Serializable {
 		}
 		return e;
 	}
-
-	/**
-	 * Compute the shortest Path from idFrom to IdTo. The computation is currently not very efficient
-	 *
-	 * @param idFrom id of the origin node
-	 * @param idTo   id of the destination node
-	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
-	 */
+	
+	public synchronized LinkedList<String> getAdjacentsNodes(String center){
+		Iterator<Edge> edges = g.getNode(center).edges().iterator();
+		LinkedList<String> nodes = new LinkedList<String>();
+		while (edges.hasNext()) {
+			Edge e = edges.next();
+			String tNode = e.getTargetNode().getId();
+			String sNode = e.getSourceNode().getId();
+			if (!tNode.equals(center)) {
+				nodes.add(tNode);
+			} else if (!sNode.equals(center)) {
+				nodes.add(sNode);
+			}
+		}
+		return nodes;
+	}
+	
+	//BFS
 	public synchronized LinkedList<String> getShortestPath(String idFrom, String idTo) {
 		LinkedList<String> shortestPath = new LinkedList<String>();
-
-		Dijkstra dijkstra = new Dijkstra();//number of edge
-		dijkstra.init(g);
-		dijkstra.setSource(g.getNode(idFrom));
-		dijkstra.compute();//compute the distance to all nodes from idFrom
-		List<Node> path = dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
-		Iterator<Node> iter = path.iterator();
-		while (iter.hasNext()) {
-			shortestPath.add(iter.next().getId());
+		HashMap<String,String> parents = new HashMap<String,String>();
+		Queue<String> bfsQ = new LinkedList<String>();
+		Set<String> visited = new HashSet<String>();
+		parents.put(idFrom, null);
+		bfsQ.add(idFrom);
+		visited.add(idFrom);
+		while(!bfsQ.isEmpty()) {
+			String node = bfsQ.remove();
+			if(node.equalsIgnoreCase(idTo)) {
+				String parent = node;
+				while(parent!=null) {
+					shortestPath.addFirst(parent);
+					parent = parents.get(parent);
+				}
+			}else {
+				for(String adjNode : getAdjacentsNodes(node)) {
+					if(!visited.contains(adjNode)) { //Hash based so constant
+						if(!getMapAttributeFromNodeId(adjNode).isBlocked()) {
+							visited.add(adjNode);
+							bfsQ.add(adjNode);
+							parents.put(adjNode, node);
+						}
+					}
+				}
+			}
 		}
-		dijkstra.clear();
+		
 		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
 			return null;
 		} else {
@@ -222,6 +247,21 @@ public class MapRepresentation implements Serializable {
 		return shortestPath;
 	}
 
+	public LinkedList<String> getShortestPathToClosestOpenNodeNotBlocked(String myPosition, String askName) {
+		//1) Get all openNodes
+		List<String> opennodes = getOpenNodesNotBlocked(askName);
+		//2) select the closest one that is
+		List<Couple<String, Integer>> lc =
+				opennodes.stream()
+						.map(on -> (getShortestPath(myPosition, on) != null) ? new Couple<String, Integer>(on, getShortestPath(myPosition, on).size()) : new Couple<String, Integer>(on, Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+						.collect(Collectors.toList());
+
+		Optional<Couple<String, Integer>> closest = lc.stream().min(Comparator.comparing(Couple::getRight));
+		//3) Compute shorterPath
+
+		return getShortestPath(myPosition, closest.get().getLeft());
+	}
+	
 	public LinkedList<String> getShortestPathToClosestOpenNode(String myPosition, String askName) {
 		//1) Get all openNodes
 		List<String> opennodes = getOpenNodes(askName);
@@ -268,6 +308,23 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 	
+	public List<String> getOpenNodesNotBlocked(String askName) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> x.getAttribute("ui.class") == "open")
+				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName)
+						|| x.getAttribute("claimant").toString().equalsIgnoreCase(""))
+				.filter(x -> !getMapAttributeFromNodeId(x.getId()).isBlocked())
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		if (computedList.isEmpty()) {
+			return this.g.nodes().filter(x -> x.getAttribute("ui.class") == "open")
+					.map(Node::getId)
+					.collect(Collectors.toList());
+		} else {
+			return computedList;
+		}
+	}
+	
 	public List<String> getClaimedNodes(String askName) {
 		List<String> computedList = this.g.nodes()
 				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
@@ -278,7 +335,7 @@ public class MapRepresentation implements Serializable {
 	
 	public List<String> getBlockedNodes() {
 		List<String> computedList = this.g.nodes()
-				.filter(x -> (Boolean) x.getAttribute("blocked") == true)
+				.filter(x -> getMapAttributeFromNodeId(x.getId()).isBlocked())
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;
@@ -459,6 +516,12 @@ public class MapRepresentation implements Serializable {
 	public boolean hasOpenNode() {
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class") == "open")
+				.findAny()).isPresent();
+	}
+	public boolean hasOpenNodeNotBlocked() {
+		return (this.g.nodes()
+				.filter(n -> n.getAttribute("ui.class") == "open")
+				.filter(n -> !getMapAttributeFromNodeId(n.getId()).isBlocked())
 				.findAny()).isPresent();
 	}
 	

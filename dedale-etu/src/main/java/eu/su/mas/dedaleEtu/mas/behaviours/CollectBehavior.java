@@ -8,6 +8,7 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapAttribute;
 import jade.core.behaviours.OneShotBehaviour;
 
 public class CollectBehavior extends OneShotBehaviour{
@@ -18,8 +19,9 @@ public class CollectBehavior extends OneShotBehaviour{
 	private ExploreCoopAgent myAgent;
 	private int returnCode;
 	private static final int NOT_DONE = 0;
-	private static final int DONE = 1;
+	private static final int DONE_EXPLORE = 1;
 	private static final int INTERLOCKING = 2;
+	private static final int DONE = 3;
 	
 	
 	public CollectBehavior(ExploreCoopAgent myagent) {
@@ -29,12 +31,6 @@ public class CollectBehavior extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-		
-		
-//		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
-//			this.returnCode = DONE;
-//			return;
-//		}
 		
 		try {
 			this.myAgent.doWait(500);
@@ -83,8 +79,19 @@ public class CollectBehavior extends OneShotBehaviour{
 				this.returnCode = INTERLOCKING;
 			}
 		} else {
-			this.returnCode = DONE;
-			return;
+			if(this.myAgent.getCurrentPlan().isComplete()) {
+				this.returnCode = DONE;
+			}else {
+				this.returnCode = DONE_EXPLORE;
+				
+				//Remove the state "blocked" of nodes from my map
+				for(String node : this.myAgent.getMyMap().getBlockedNodes()) {
+					MapAttribute truc = this.myAgent.getMyMap().getMapAttributeFromNodeId(node);
+					truc.setBlocked(false);
+					this.myAgent.getMyMap().addNode(node, truc);
+				}
+				return;
+			}
 		}
 	}
 

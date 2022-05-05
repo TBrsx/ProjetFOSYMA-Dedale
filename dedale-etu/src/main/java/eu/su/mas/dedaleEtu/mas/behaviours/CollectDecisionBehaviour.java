@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -26,6 +24,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private static final int PLAN_SHARING = 0;
 	private static final int BEGIN_COLLECT = 1;
 	private static final int INTERLOCKING = 2;
+	private static final int SKIP_COLLECT = 3;
 	private int returnCode;
 	private int totalDiamond = 0;
 	private int totalGold = 0;
@@ -83,17 +82,17 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			LinkedList<Map.Entry<String, Integer>> diamondNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<Map.Entry<String, Integer>> goldNodes = new LinkedList<Map.Entry<String, Integer>>();
-			LinkedList<String> blockedNodes = new LinkedList<String>();
-			CollectPlan elPlan = new CollectPlan("ElPlan_"+this.myAgent.getLocalName());
+			LinkedList<String> toExploreNodes = new LinkedList<String>();
+			CollectPlan elPlan = new CollectPlan("ElPlan_"+"1");
+			elPlan.setVersion(1);
 			elPlan.setNodesInPlan(allNodes.size());
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
 			
-			//Get info on nodes to collect
+			//Get info on nodes to collect or explore
 			for (String n : allNodes) {
 				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(n);
 				if (mapAtt.getTreasure().getLeft() != null) {
-					//TODO : See why sometime it's null when it shouldn't
 					if(mapAtt.getTreasure().getLeft() == Observation.DIAMOND) {
 						diamondNodes.add(Map.entry(n,mapAtt.getTreasure().getRight()));
 						totalDiamond += mapAtt.getTreasure().getRight();
@@ -101,6 +100,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 						goldNodes.add(Map.entry(n,mapAtt.getTreasure().getRight()));
 						totalGold += mapAtt.getTreasure().getRight();
 					}
+				}
+				if (mapAtt.getState().equalsIgnoreCase("open")) {
+					toExploreNodes.add(n);
 				}
 			}
 			
@@ -177,7 +179,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			
 			
-			
 			//===What follows is O(n*k) where n is the number of nodes, k the number of agents. A bit expensive, but still manageable.
 			
 			for(Map.Entry<String, Integer> dN : diamondNodes) {
@@ -195,7 +196,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 				if(lowestRatio.getValue()<101) { //We did find an agent eligible
 					String chosenAgent = lowestRatio.getKey();
-					elPlan.addNode(new MapAttributeCollect(dN.getKey(),chosenAgent,"",""));
+					elPlan.addNode(new MapAttributeCollect(dN.getKey(),chosenAgent,""));
 					//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
 					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- dN.getValue());
 					Double newRatio = ((double) (agentsDiamondCapacity.get(chosenAgent)-spaceRemaining.get(chosenAgent)))/agentsDiamondCapacity.get(chosenAgent)*100;
@@ -207,12 +208,12 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 			}
 			
-			for(Map.Entry<String, Integer> dN : goldNodes) {
+			for(Map.Entry<String, Integer> gN : goldNodes) {
 				//Find the agent with the lowest ratio and the largest available space in case of a tie
 				Map.Entry<String, Double> lowestRatio = Map.entry("", 101.0);
 				int biggestSpaceRemaining = 0;
 				for(String agent : agentsGoldCapacity.keySet()) {
-					if (dN.getValue() < spaceRemaining.get(agent)){
+					if (gN.getValue() < spaceRemaining.get(agent)){
 						if (fillingRatioGold.get(agent)<lowestRatio.getValue() || 
 								(fillingRatioGold.get(agent) == lowestRatio.getValue() && spaceRemaining.get(agent) > biggestSpaceRemaining)){
 							lowestRatio = Map.entry(agent, fillingRatioGold.get(agent));
@@ -222,9 +223,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				}
 				if(lowestRatio.getValue()<101) { //We did find an agent eligible
 					String chosenAgent = lowestRatio.getKey();
-					elPlan.addNode(new MapAttributeCollect(dN.getKey(),"",chosenAgent,""));
+					elPlan.addNode(new MapAttributeCollect(gN.getKey(),"",chosenAgent));
 					//Compute the remaining space the ratio and if it is now at 100%, remove this agent from the list
-					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- dN.getValue());
+					spaceRemaining.put(chosenAgent, spaceRemaining.get(chosenAgent)- gN.getValue());
 					Double newRatio = ((double) (agentsGoldCapacity.get(chosenAgent)-spaceRemaining.get(chosenAgent)))/agentsGoldCapacity.get(chosenAgent)*100;
 					if(newRatio>=100.0) {
 						agentsGoldCapacity.remove(chosenAgent);
@@ -236,8 +237,14 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		
 			
 			//===
-			
+			elPlan.saveRatios(fillingRatioDiamond, fillingRatioGold, agentsDiamondCapacity, agentsGoldCapacity);
+			elPlan.setNodesToExplore(toExploreNodes);
+			if(!this.myAgent.getMyMap().hasOpenNode()) {
+				elPlan.setComplete(true);
+			}
 			this.myAgent.setCurrentPlan(elPlan);
+			
+			
 			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
 			this.returnCode = PLAN_SHARING;
@@ -247,29 +254,28 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		
 		this.returnCode = PLAN_SHARING;
 	}
+	
+	private void adaptPlan() {
+		this.myAgent.getCurrentPlan().adaptPlan(this.myAgent.getMyMap(), (LinkedList<String>) this.getDataStore().get("awareOfPlan"),this.myAgent.getCurrentPlan());
+		LinkedList<String> experts = new LinkedList<String>();
+		experts.add(this.myAgent.getLocalName());
+		getDataStore().put("awareOfPlan",experts);
+		this.myAgent.getCurrentPlan().setVersion(this.myAgent.getCurrentPlan().getVersion()+1);
+		String truncatedName = this.myAgent.getCurrentPlan().getName().replaceAll("[0-9", "");
+		this.myAgent.getCurrentPlan().setName(truncatedName+this.myAgent.getCurrentPlan().getVersion()+1);
+		
+		System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
+	}
 
 	private void sharePlan() { //Move to/around the meeting point
 		
 		//Stop sharing and start collecting if all agents are experts
 		LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
 		if (experts.size() >= this.myAgent.getOtherAgents().size()+1) {
-			//Set path to follow to reach first treasure to collect
-			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
-					this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
-			if (this.myAgent.getPathToFollow() == null) {
-				this.myAgent.setPathToFollow(new LinkedList<String>());
-			}
-			this.myAgent.setNextPosition("");
-			if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
-				this.myAgent.setTreasureType(Observation.DIAMOND);
-			}
-			if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
-				this.myAgent.setTreasureType(Observation.GOLD);
-			}
-			this.returnCode = BEGIN_COLLECT;
+			startCollect();
 		}else {
 			this.moveToMeeting();
-			this.returnCode = 0;
+			this.returnCode = PLAN_SHARING;
 		}
 	}
 	private void searchPlan() {
@@ -278,13 +284,42 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		this.returnCode = PLAN_SHARING;
 	}
 	
+	private void startCollect() {
+		
+		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
+			this.returnCode = SKIP_COLLECT;
+			return;
+		}else {
+			//Set path to follow to reach first treasure to collect
+			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
+					this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
+			if (this.myAgent.getPathToFollow() == null) {
+				this.myAgent.setPathToFollow(new LinkedList<String>());
+			}
+			this.myAgent.setNextPosition("");
+			String firstNodeName = this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).getFirst();
+			if(this.myAgent.getMyMap().getMapAttributeFromNodeId(firstNodeName).getTreasure().getLeft()==Observation.DIAMOND) {
+				this.myAgent.setTreasureType(Observation.DIAMOND);
+			}
+			if(this.myAgent.getMyMap().getMapAttributeFromNodeId(firstNodeName).getTreasure().getLeft()==Observation.GOLD) {
+				this.myAgent.setTreasureType(Observation.GOLD);
+			}
+			this.returnCode = BEGIN_COLLECT;
+		}
+	}
+	
 	@Override
 	public void action() {
 		this.myAgent.doWait(500);
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
-			if (this.myAgent.getCurrentPlan() == null){
-				this.createPlan();
+			if ((Boolean) this.getDataStore().get("CreateNewPlan")){
+				this.getDataStore().put("CreateNewPlan", false);
+				if(this.myAgent.getCurrentPlan() == null) {
+					this.createPlan();
+				}else {
+					this.adaptPlan();
+				}
 			}else {
 				this.sharePlan();
 			}
@@ -292,19 +327,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			if (this.myAgent.getCurrentPlan() == null){
 				this.searchPlan();
 			}else {
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
-						this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
-				if (this.myAgent.getPathToFollow() == null) {
-					this.myAgent.setPathToFollow(new LinkedList<String>());
-				}
-				this.myAgent.setNextPosition("");
-				if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
-					this.myAgent.setTreasureType(Observation.DIAMOND);
-				}
-				if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
-					this.myAgent.setTreasureType(Observation.GOLD);
-				}
-				this.returnCode = BEGIN_COLLECT;
+				startCollect();
 			}
 		}
 	}
