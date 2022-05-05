@@ -24,6 +24,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private static final int PLAN_SHARING = 0;
 	private static final int BEGIN_COLLECT = 1;
 	private static final int INTERLOCKING = 2;
+	private static final int SKIP_COLLECT = 3;
 	private int returnCode;
 	private int totalDiamond = 0;
 	private int totalGold = 0;
@@ -82,7 +83,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			LinkedList<Map.Entry<String, Integer>> diamondNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<Map.Entry<String, Integer>> goldNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<String> toExploreNodes = new LinkedList<String>();
-			CollectPlan elPlan = new CollectPlan("ElPlan_"+this.myAgent.getLocalName());
+			int version = this.myAgent.getCurrentPlan() == null ? 0 : this.myAgent.getCurrentPlan().getVersion();
+			CollectPlan elPlan = new CollectPlan("ElPlan_"+version+1);
+			elPlan.setVersion(elPlan.getVersion()+1);
 			elPlan.setNodesInPlan(allNodes.size());
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
@@ -255,6 +258,24 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		//Stop sharing and start collecting if all agents are experts
 		LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
 		if (experts.size() >= this.myAgent.getOtherAgents().size()+1) {
+			startCollect();
+		}else {
+			this.moveToMeeting();
+			this.returnCode = PLAN_SHARING;
+		}
+	}
+	private void searchPlan() {
+		//Move randomly around the meeting point, waiting for plan
+		this.moveToMeeting();
+		this.returnCode = PLAN_SHARING;
+	}
+	
+	private void startCollect() {
+		
+		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
+			this.returnCode = SKIP_COLLECT;
+			return;
+		}else {
 			//Set path to follow to reach first treasure to collect
 			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
 					this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
@@ -262,22 +283,15 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				this.myAgent.setPathToFollow(new LinkedList<String>());
 			}
 			this.myAgent.setNextPosition("");
-			if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
+			String firstNodeName = this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).getFirst();
+			if(this.myAgent.getMyMap().getMapAttributeFromNodeId(firstNodeName).getTreasure().getLeft()==Observation.DIAMOND) {
 				this.myAgent.setTreasureType(Observation.DIAMOND);
 			}
-			if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
+			if(this.myAgent.getMyMap().getMapAttributeFromNodeId(firstNodeName).getTreasure().getLeft()==Observation.GOLD) {
 				this.myAgent.setTreasureType(Observation.GOLD);
 			}
 			this.returnCode = BEGIN_COLLECT;
-		}else {
-			this.moveToMeeting();
-			this.returnCode = 0;
 		}
-	}
-	private void searchPlan() {
-		//Move randomly around the meeting point, waiting for plan
-		this.moveToMeeting();
-		this.returnCode = PLAN_SHARING;
 	}
 	
 	@Override
@@ -294,19 +308,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			if (this.myAgent.getCurrentPlan() == null){
 				this.searchPlan();
 			}else {
-				this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestInList(this.myAgent.getCurrentPosition(), 
-						this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName())));
-				if (this.myAgent.getPathToFollow() == null) {
-					this.myAgent.setPathToFollow(new LinkedList<String>());
-				}
-				this.myAgent.setNextPosition("");
-				if(this.myAgent.getCurrentPlan().getDiamondCollectors().contains(this.myAgent.getLocalName())) {
-					this.myAgent.setTreasureType(Observation.DIAMOND);
-				}
-				if(this.myAgent.getCurrentPlan().getGoldCollectors().contains(this.myAgent.getLocalName())) {
-					this.myAgent.setTreasureType(Observation.GOLD);
-				}
-				this.returnCode = BEGIN_COLLECT;
+				startCollect();
 			}
 		}
 	}

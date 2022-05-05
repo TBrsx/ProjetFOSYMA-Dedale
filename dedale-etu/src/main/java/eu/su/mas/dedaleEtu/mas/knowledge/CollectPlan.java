@@ -22,6 +22,7 @@ public class CollectPlan implements Serializable{
 	private HashMap<String,Integer> spaceRemainingGold;
 	private boolean isComplete = false;
 	private int nodesInPlan = 0;
+	private int version = 0;
 
 	public CollectPlan(String name) {
 		this.name = name;
@@ -50,6 +51,18 @@ public class CollectPlan implements Serializable{
 	public void removeNodeWithId(String id) {
 		this.nodes.remove(id);
 		this.nodesInPlan--;
+	}
+	
+	public CollectPlan partOfPlan(String agent) {
+		CollectPlan partOfPlan = new CollectPlan(this.name);
+		partOfPlan.setNodesInPlan(this.nodesInPlan);
+		for (MapAttributeCollect n : this.nodes.values()) {
+			if(n.getDiamondCollector().equalsIgnoreCase(agent) || n.getGoldCollector().equalsIgnoreCase(agent)) {
+				partOfPlan.addNode(n);
+			}
+		}
+		partOfPlan.setNodesToExplore(this.nodesToExplore);
+		return partOfPlan;
 	}
 	
 	public LinkedList<String> getAttributedNodes(String askName) {
@@ -209,6 +222,14 @@ public class CollectPlan implements Serializable{
 
 	public void setNodesToExplore(LinkedList<String> nodesToExplore) {
 		this.nodesToExplore = nodesToExplore;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
 	}
 
 }

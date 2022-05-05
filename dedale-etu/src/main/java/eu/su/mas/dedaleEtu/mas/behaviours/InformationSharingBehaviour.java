@@ -173,7 +173,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			this.myAgent.getPathToFollow().clear();
 			this.myAgent.setNextPosition(null);
 	}
-
+	
 	private void sharePlan(String receiver) {
 		//Send the name of the plan
 		ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
@@ -185,76 +185,42 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		
 		//Receive his answer
 		
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-					MessageTemplate.and(MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),MessageTemplate.MatchPerformative(ACLMessage.AGREE)),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
-			ACLMessage msgReceived = this.waitForMessage(msgTemplate, 200);
-			if(msgReceived == null) {
+		
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+				MessageTemplate.and(MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),MessageTemplate.MatchPerformative(ACLMessage.AGREE)),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
+		ACLMessage msgReceived = this.waitForMessage(msgTemplate, 200);
+		if(msgReceived == null) {
+			return;
+		}
+		
+		if(msgReceived.getPerformative() == ACLMessage.REFUSE) {
+			if(msgReceived.getContent().equalsIgnoreCase("We got the same plan !")) {
 				return;
 			}
-			
-			if(msgReceived.getPerformative() == ACLMessage.REFUSE) {
-				if(msgReceived.getContent().equalsIgnoreCase("We got the same plan !")) {
-					return;
-				}else {
-					int receiverPlanSize =  Integer.parseInt(msgReceived.getContent());
-					if(receiverPlanSize>this.myAgent.getCurrentPlan().getNodesInPlan()) {
-						msg.setContent("Your plan is better, I need it !");
-						this.myAgent.sendMessage(msg);
-						msgReceived = null;
-						msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-								MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
-						//Wait for next message
-						msgReceived = this.waitForMessage(msgTemplate, 200);
-						if(msgReceived != null) {
-							try {
-								this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
-								getDataStore().put("decision-master", receiver);
-								msg = new ACLMessage(ACLMessage.CONFIRM);
-								msg.setProtocol("SHARE-PLAN");
-								msg.setSender(this.myAgent.getAID());
-								msg.addReceiver(msgReceived.getSender());
-								msg.setContent("I received your plan, everything is fine !");
-								this.myAgent.sendMessage(msg);
-							} catch (UnreadableException e) {
-								e.printStackTrace();
-							}
-						}
-						return;
-					}else {
-						msg.setPerformative(ACLMessage.REQUEST);
-						msg.setContent("My plan is better, I send it !");
-						this.myAgent.sendMessage(msg);
-						msgReceived = this.waitForMessage(msgTemplate, 200); //For the incoming agree
-						if(msgReceived == null) {
-							return;
-						}
-					}
+		}else {
+			//Send the part of the plan the agent needs to know
+			msg = new ACLMessage(ACLMessage.INFORM);
+			msg.setProtocol("SHARE-PLAN");
+			msg.setSender(this.myAgent.getAID());
+			msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
+			try {
+				msg.setContentObject(this.myAgent.getCurrentPlan().partOfPlan(receiver));
+				this.myAgent.sendMessage(msg);
+				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+						MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
+				if(this.messageTimeout(msgTemplate,3000) != null) {
+					//Update list of experts
+					LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
+					experts.add(receiver);
+					this.getDataStore().put("awareOfPlan",experts);
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		
-		//Send the plan
-		msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setProtocol("SHARE-PLAN");
-		msg.setSender(this.myAgent.getAID());
-		msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
-		try {
-			msg.setContentObject(this.myAgent.getCurrentPlan());
-			this.myAgent.sendMessage(msg);
-			msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
-			if(this.messageTimeout(msgTemplate,3000) != null) {
-				//Update list of experts
-				LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
-				experts.add(receiver);
-				this.getDataStore().put("awareOfPlan",experts);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
 	private void receivePlan(String sender, ACLMessage msgReceived) {
-		Boolean wantPlan = false;
 		//If we got the same plan I don't need it
 		if(this.myAgent.getCurrentPlan()!=null) {
 			ACLMessage msg = new ACLMessage(ACLMessage.REFUSE);
@@ -264,70 +230,32 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			if (msgReceived.getContent().equalsIgnoreCase(this.myAgent.getCurrentPlan().getName())){
 				msg.setContent("We got the same plan !");
 				this.myAgent.sendMessage(msg);
-			}else {
-				msg.setContent(Integer.toString(this.myAgent.getCurrentPlan().getNodesInPlan()));
-				this.myAgent.sendMessage(msg);
-				
-				MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-						MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REQUEST),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
-				
-				msgReceived = this.waitForMessage(msgTemplate, 200);
-				if(msgReceived!=null) {
-					if(msgReceived.getContent().equalsIgnoreCase("Your plan is better, I need it !")){
-						//TODO : Refactor plan so it doesn't change for the agents that started to collect
-						//Send the plan
-						msg = new ACLMessage(ACLMessage.INFORM);
-						msg.setProtocol("SHARE-PLAN");
-						msg.setSender(this.myAgent.getAID());
-						msg.addReceiver(new AID(sender, AID.ISLOCALNAME));
-						try {
-							msg.setContentObject(this.myAgent.getCurrentPlan());
-							this.myAgent.sendMessage(msg);
-							msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-									MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
-							if(this.messageTimeout(msgTemplate,3000) != null) {
-								//Update list of experts
-								LinkedList<String> experts = (LinkedList<String>) this.getDataStore().get("awareOfPlan");
-								experts.add(sender);
-								this.getDataStore().put("awareOfPlan",experts);
-							}
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}else {
-						wantPlan = true;
-					}
-				}
+				return;
 			}
-		}else {
-			wantPlan = true;
 		}
-		
-		if(wantPlan) {
-			ACLMessage msg = new ACLMessage(ACLMessage.AGREE);
-			msg.setProtocol("SHARE-PLAN");
-			msg.setSender(this.myAgent.getAID());
-			msg.addReceiver(msgReceived.getSender());
-			this.myAgent.sendMessage(msg);
-			msg=null;
-			msgReceived = null;
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
-					MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
-			//Wait for next message
-			msgReceived = this.waitForMessage(msgTemplate, 200);
-			if(msgReceived != null) {
-				try {
-					this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
-					getDataStore().put("decision-master", sender);
-					msg = new ACLMessage(ACLMessage.CONFIRM);
-					msg.setProtocol("SHARE-PLAN");
-					msg.setSender(this.myAgent.getAID());
-					msg.addReceiver(msgReceived.getSender());
-					msg.setContent("I received your plan, everything is fine !");
-					this.myAgent.sendMessage(msg);
-				} catch (UnreadableException e) {
-					e.printStackTrace();
-				}
+				
+		ACLMessage msg = new ACLMessage(ACLMessage.AGREE);
+		msg.setProtocol("SHARE-PLAN");
+		msg.setSender(this.myAgent.getAID());
+		msg.addReceiver(msgReceived.getSender());
+		this.myAgent.sendMessage(msg);
+		msg=null;
+		msgReceived = null;
+		MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
+				MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),MessageTemplate.MatchSender(new AID(sender,AID.ISLOCALNAME))));
+		//Wait for next message
+		msgReceived = this.waitForMessage(msgTemplate, 200);
+		if(msgReceived != null) {
+			try {
+				this.myAgent.setCurrentPlan((CollectPlan) msgReceived.getContentObject());
+				msg = new ACLMessage(ACLMessage.CONFIRM);
+				msg.setProtocol("SHARE-PLAN");
+				msg.setSender(this.myAgent.getAID());
+				msg.addReceiver(msgReceived.getSender());
+				msg.setContent("I received your plan, everything is fine !");
+				this.myAgent.sendMessage(msg);
+			} catch (UnreadableException e) {
+				e.printStackTrace();
 			}
 		}
 		
