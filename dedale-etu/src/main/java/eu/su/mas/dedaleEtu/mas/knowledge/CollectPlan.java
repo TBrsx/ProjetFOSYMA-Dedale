@@ -4,11 +4,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import eu.su.mas.dedale.env.Observation;
 
-import java.util.Set;
 
 public class CollectPlan implements Serializable{
 	
@@ -18,14 +16,12 @@ public class CollectPlan implements Serializable{
 	private LinkedList<String> diamondCollectors = new LinkedList<String>();
 	private LinkedList<String> goldCollectors = new LinkedList<String>();
 	private LinkedList<String> nodesToExplore = new LinkedList<String>();
-	HashMap<String,Double> fillingRatioDiamond;
-	HashMap<String,Double> fillingRatioGold;
-	HashMap<String,Integer> spaceRemainingDiamond;
-	HashMap<String,Integer> spaceRemainingGold;
+	private HashMap<String,Double> fillingRatioDiamond;
+	private HashMap<String,Double> fillingRatioGold;
+	private HashMap<String,Integer> spaceRemainingDiamond;
+	private HashMap<String,Integer> spaceRemainingGold;
 	private boolean isComplete = false;
 	private int nodesInPlan = 0;
-	private LinkedList<Entry<String, Integer>> diamondNodes;
-	private LinkedList<Entry<String, Integer>> goldNodes;
 
 	public CollectPlan(String name) {
 		this.name = name;
@@ -74,7 +70,8 @@ public class CollectPlan implements Serializable{
 		this.spaceRemainingGold = spaceRemainingGold;
 	}
 	
-	public void adaptPlan(MapRepresentation myMap,LinkedList<String> agentsAlreadyCollecting,HashMap<String,MapAttributeCollect> nodesOldPlan) {
+	public void adaptPlan(MapRepresentation myMap,LinkedList<String> agentsAlreadyCollecting,CollectPlan oldPlan) {
+		HashMap<String,MapAttributeCollect> nodesOldPlan = oldPlan.nodes;
 		Map.Entry<String, Integer> dN = null;
 		Map.Entry<String, Integer> gN = null;
 		for (String nodeId : this.nodes.keySet()) {
@@ -162,6 +159,7 @@ public class CollectPlan implements Serializable{
 		String diamond = "Diamond :\n";
 		String gold = "Gold :\n";
 		String explorer = "Explorer :\n";
+		explorer = explorer.concat(this.nodesToExplore.toString());
 		for(MapAttributeCollect n : this.nodes.values()) {
 			if (!n.getDiamondCollector().isEmpty()){
 				diamond = diamond.concat(n.getId() +  " : " + n.getDiamondCollector() + ", ");
@@ -205,11 +203,12 @@ public class CollectPlan implements Serializable{
 		this.isComplete = isComplete;
 	}
 
-	public void saveNodes(LinkedList<Entry<String, Integer>> diamondNodes,
-			LinkedList<Entry<String, Integer>> goldNodes) {
-		this.diamondNodes = diamondNodes;
-		this.goldNodes = goldNodes;
-		
+	public LinkedList<String> getNodesToExplore() {
+		return nodesToExplore;
+	}
+
+	public void setNodesToExplore(LinkedList<String> nodesToExplore) {
+		this.nodesToExplore = nodesToExplore;
 	}
 
 }

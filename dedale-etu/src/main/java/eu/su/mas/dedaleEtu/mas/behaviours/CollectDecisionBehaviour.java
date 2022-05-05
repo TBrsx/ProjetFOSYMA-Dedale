@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -83,13 +81,13 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			LinkedList<Map.Entry<String, Integer>> diamondNodes = new LinkedList<Map.Entry<String, Integer>>();
 			LinkedList<Map.Entry<String, Integer>> goldNodes = new LinkedList<Map.Entry<String, Integer>>();
-			LinkedList<String> blockedNodes = new LinkedList<String>();
+			LinkedList<String> toExploreNodes = new LinkedList<String>();
 			CollectPlan elPlan = new CollectPlan("ElPlan_"+this.myAgent.getLocalName());
 			elPlan.setNodesInPlan(allNodes.size());
 			Map.Entry<String, Integer> bestCollectorD = null;
 			Map.Entry<String, Integer> bestCollectorG = null;
 			
-			//Get info on nodes to collect
+			//Get info on nodes to collect or explore
 			for (String n : allNodes) {
 				MapAttribute mapAtt = this.myAgent.getMyMap().getMapAttributeFromNodeId(n);
 				if (mapAtt.getTreasure().getLeft() != null) {
@@ -100,6 +98,9 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 						goldNodes.add(Map.entry(n,mapAtt.getTreasure().getRight()));
 						totalGold += mapAtt.getTreasure().getRight();
 					}
+				}
+				if (mapAtt.getState().equalsIgnoreCase("open")) {
+					toExploreNodes.add(n);
 				}
 			}
 			
@@ -173,7 +174,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			//Sort on amount to collect
 			Collections.sort(diamondNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
 			Collections.sort(goldNodes, (o1,o2) -> o1.getValue().compareTo(o2.getValue()));
-			elPlan.saveNodes(diamondNodes,goldNodes);
 			
 			
 			
@@ -236,7 +236,10 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			
 			//===
 			elPlan.saveRatios(fillingRatioDiamond, fillingRatioGold, agentsDiamondCapacity, agentsGoldCapacity);
+			elPlan.setNodesToExplore(toExploreNodes);
 			this.myAgent.setCurrentPlan(elPlan);
+			
+			
 			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
 			this.returnCode = PLAN_SHARING;
