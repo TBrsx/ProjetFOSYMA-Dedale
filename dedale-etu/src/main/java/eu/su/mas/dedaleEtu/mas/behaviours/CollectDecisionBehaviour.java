@@ -38,8 +38,11 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	
 	private void moveToMeeting() {
 		String meeting = this.myAgent.getMeetingPoint();
+		if (this.myAgent.getPathToFollow() == null){
+			this.myAgent.setPathToFollow(new LinkedList<String>());
+		}
 		if (this.myAgent.getPathToFollow().isEmpty()){
-			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 10));
+			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 5));
 			if(this.myAgent.getCurrentPosition().equalsIgnoreCase(meeting)) { //If I am at the meeting point
 				getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
 			}else {
@@ -275,7 +278,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		experts.add(this.myAgent.getLocalName());
 		getDataStore().put("awareOfPlan",experts);
 		this.myAgent.getCurrentPlan().setVersion(this.myAgent.getCurrentPlan().getVersion()+1);
-		String truncatedName = this.myAgent.getCurrentPlan().getName().replaceAll("[0-9", "");
+		String truncatedName = this.myAgent.getCurrentPlan().getName().replaceAll("[0-9]", "");
 		this.myAgent.getCurrentPlan().setName(truncatedName+this.myAgent.getCurrentPlan().getVersion()+1);
 		
 		System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
@@ -288,7 +291,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 		if (experts.size() >= this.myAgent.getOtherAgents().size()+1) {
 			startCollect();
 		}else {
-			System.out.println(experts);
+			//System.out.println(experts);
 			this.moveToMeeting();
 			this.returnCode = PLAN_SHARING;
 		}
@@ -343,6 +346,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			if (this.myAgent.getCurrentPlan() == null){
 				this.searchPlan();
 			}else {
+				System.out.println(this.myAgent.getLocalName() + " - I received a plan, named " + this.myAgent.getCurrentPlan().getName());
 				this.startCollect();
 			}
 		}

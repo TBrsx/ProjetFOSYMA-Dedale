@@ -59,11 +59,13 @@ public class CollectBehavior extends OneShotBehaviour{
 		LinkedList<String> path = this.myAgent.getPathToFollow();
 		//We reached our destination, there should be a chest to open
 		if (path.isEmpty()) {
-			if(this.myAgent.openLock(this.myAgent.getTreasureType())) {
-				int pickedQuantity = this.myAgent.pick();
-				System.out.println(this.myAgent.getLocalName() + " - I picked " + Integer.toString(pickedQuantity) + " " + this.myAgent.getTreasureType());
-			}else {
-				System.out.println(this.myAgent.getLocalName() + " - I failed to open the lock");
+			if(this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).contains( this.myAgent.getCurrentPosition())) {
+				if(this.myAgent.openLock(this.myAgent.getTreasureType())) {
+					int pickedQuantity = this.myAgent.pick();
+					System.out.println(this.myAgent.getLocalName() + " - I picked " + Integer.toString(pickedQuantity) + " " + this.myAgent.getTreasureType());
+				}else {
+					System.out.println(this.myAgent.getLocalName() + " - I failed to open the lock");
+				}
 			}
 			//Set path to next node to collect
 			this.myAgent.getCurrentPlan().removeNodeWithId(myPosition);

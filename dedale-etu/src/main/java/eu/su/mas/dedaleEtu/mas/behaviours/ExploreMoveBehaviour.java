@@ -125,7 +125,7 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				this.myAgent.getPathToFollow().addFirst(myPosition);
 
 				// 3.2) Otherwise if he had a destination, follow the given path
-			} else if (this.myAgent.getPathToFollow().peekFirst() != null) {
+			} else if (this.myAgent.getPathToFollow() !=null && !this.myAgent.getPathToFollow().isEmpty()) {
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
 
 				// 3.3) Otherwise choose the closest open node if there is one
@@ -135,7 +135,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				if(this.myAgent.getPathToFollow() == null) {
 					this.myAgent.setPathToFollow(this.myAgent.getMyMap().getShortestPathToClosestOpenNode(myPosition,this.myAgent.getLocalName()));
 				}
+				if(this.myAgent.getPathToFollow() != null) {
 				nextNode = this.myAgent.getPathToFollow().removeFirst();
+				}
 
 			} else {
 				// 3.4) If there is no open node, the exploration *should* be complete

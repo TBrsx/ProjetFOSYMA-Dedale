@@ -249,8 +249,11 @@ public class MapRepresentation implements Serializable {
 	}
 
 	public LinkedList<String> getShortestPathToClosestOpenNodeNotBlocked(String myPosition, String askName) {
-		//1) Get all openNodes
+		//1) Get all openNodes (First only the claimed ones, but if empty go for all the nodes)
 		List<String> opennodes = getOpenNodesNotBlocked(askName);
+		if (opennodes.isEmpty()){
+			opennodes = getOpenNodes(askName);
+		}
 		//2) select the closest one that is
 		List<Couple<String, Integer>> lc =
 				opennodes.stream()
@@ -329,6 +332,15 @@ public class MapRepresentation implements Serializable {
 	public List<String> getClaimedNodes(String askName) {
 		List<String> computedList = this.g.nodes()
 				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
+				.map(Node::getId)
+				.collect(Collectors.toList());
+		return computedList;
+	}
+	
+	public List<String> getClaimedNodesNotBlocked(String askName) {
+		List<String> computedList = this.g.nodes()
+				.filter(x -> x.getAttribute("claimant").toString().equalsIgnoreCase(askName))
+				.filter(x -> (Boolean) x.getAttribute("blocked") == false)
 				.map(Node::getId)
 				.collect(Collectors.toList());
 		return computedList;
@@ -464,7 +476,6 @@ public class MapRepresentation implements Serializable {
 			addNode(n.getNodeId(),attributes);
 		}
 	}
-	//TODO : Done : state, claimant. Not done : blocked. Need a synchronization
 	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived,ExploreCoopAgent agent,String sender) {
 		for (SerializableNode<String, MapAttribute> n : sgreceived.getAllNodes()) {
 			MapAttribute attributes = n.getNodeContent();

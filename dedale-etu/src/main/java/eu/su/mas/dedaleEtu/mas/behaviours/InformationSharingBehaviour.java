@@ -170,8 +170,12 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			}
 			this.myAgent.getMyMap().mergeMap(sgreceived,this.myAgent,msgReceived.getSender().getLocalName());
 			}
+		if (this.myAgent.getPathToFollow() != null) {
 			this.myAgent.getPathToFollow().clear();
-			this.myAgent.setNextPosition(null);
+			this.myAgent.setNextPosition("");
+		}else {
+			this.myAgent.setPathToFollow(new LinkedList<String>());
+		}
 	}
 	
 	private void sharePlan(String receiver) {
