@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.graphstream.graph.Edge;
@@ -143,6 +144,9 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 				// 3.4) If there is no open node, the exploration *should* be complete
 				//System.out.println(this.myAgent.getLocalName() + "- There is no open nodes left. I'm finished !");
 				this.myAgent.setNextPosition("");
+				if (this.myAgent.getPathToFollow() == null) {
+					this.myAgent.setPathToFollow(new LinkedList<String>());
+				}
 				this.myAgent.getPathToFollow().clear();
 				this.returnCode = NO_OPEN_NODE;
 				return; //No need to do the other moves

@@ -31,7 +31,8 @@ public class CollectBehavior extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-				
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		try {
 			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		} catch (Exception e) {
