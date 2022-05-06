@@ -6,8 +6,11 @@ public class MapAttributeCollect implements Serializable{
 	
 	private static final long serialVersionUID = 8335323692755407639L;
 	private String id;
-	private String diamondCollector; //Name of agent that is tasked to collecting diamond on this node
-	private String goldCollector; //Name of agent that is tasked to collecting gold on this node
+	private String goldCollector;
+	private String diamondCollector;
+	
+	//All the useful information about a node during the collect. Mostly a deprecated class, should be merged with MapAttribute.
+
 	
 	public MapAttributeCollect(String id,String diamondCollector,String goldCollector) {
 		this.diamondCollector = diamondCollector;

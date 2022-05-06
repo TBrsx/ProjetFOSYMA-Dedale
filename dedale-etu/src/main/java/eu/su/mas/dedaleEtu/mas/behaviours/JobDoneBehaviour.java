@@ -8,6 +8,8 @@ public class JobDoneBehaviour extends OneShotBehaviour {
 	private static final long serialVersionUID = -5610039770213140761L;
 	
 	private ExploreCoopAgent myAgent;
+	
+	//When an agent is done with collecting and exploring, it moves randomly and print that he's done !
 
 	public JobDoneBehaviour(ExploreCoopAgent ag) {
 		super(ag);

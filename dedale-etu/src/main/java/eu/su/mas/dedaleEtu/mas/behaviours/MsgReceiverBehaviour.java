@@ -19,6 +19,8 @@ public class MsgReceiverBehaviour extends OneShotBehaviour {
 	private int returnCode = NO_MSG;
 
 	ExploreCoopAgent myAgent;
+	
+	//Handle all msg receptions that leads to other protocols
 
 	public MsgReceiverBehaviour(ExploreCoopAgent ag) {
 		super(ag);

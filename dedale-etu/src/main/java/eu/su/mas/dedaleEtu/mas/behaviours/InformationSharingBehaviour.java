@@ -33,6 +33,8 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	private boolean isReceiver;
 	private ACLMessage msgReceived;
 	
+	//Behavior that handles all the sharing of diverses informations used by agents
+	
 	public InformationSharingBehaviour(final ExploreCoopAgent myagent,boolean isReceiver) {
 		super(myagent);
 		this.myAgent = myagent;

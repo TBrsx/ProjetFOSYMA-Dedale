@@ -23,6 +23,8 @@ public class CollectPlan implements Serializable{
 	private boolean isComplete = false;
 	private int nodesInPlan = 0;
 	private int version = 0;
+	
+	//Plan used by the agents to collect the treasures
 
 	public CollectPlan(String name) {
 		this.name = name;

@@ -20,11 +20,6 @@ import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import javafx.application.Platform;
 
-/**
- * This simple topology representation only deals with the graph, not its content.</br>
- * The knowledge representation is not well written (at all), it is just given as a minimal example.</br>
- * The viewer methods are not independent of the data structure, and the dijkstra is recomputed every-time.
- */
 public class MapRepresentation implements Serializable {
 
 	/**

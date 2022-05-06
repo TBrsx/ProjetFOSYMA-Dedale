@@ -11,6 +11,8 @@ import eu.su.mas.dedale.env.Observation;
 public class MapAttribute implements Serializable {
 
 	private static final long serialVersionUID = 3664792526110659066L;
+	
+	//All the useful information about a node during the exploration
 
 
 	private String state; //open,closed

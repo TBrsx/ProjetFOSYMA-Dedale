@@ -30,6 +30,8 @@ public class ExploreMoveBehaviour extends OneShotBehaviour {
 
 	
 	private ExploreCoopAgent myAgent;
+	
+	//This is the exploration behavior
 
 	
 	public ExploreMoveBehaviour(ExploreCoopAgent myagent) {

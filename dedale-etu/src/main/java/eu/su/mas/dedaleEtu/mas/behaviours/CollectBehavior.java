@@ -23,6 +23,7 @@ public class CollectBehavior extends OneShotBehaviour{
 	private static final int INTERLOCKING = 2;
 	private static final int DONE = 3;
 	
+	//This Behavior is the one the agents use to collect the treasures
 	
 	public CollectBehavior(ExploreCoopAgent myagent) {
 		super(myagent);
