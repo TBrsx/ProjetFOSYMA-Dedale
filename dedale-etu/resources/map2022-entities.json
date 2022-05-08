@@ -7,8 +7,8 @@
   "backPackCapacityGold": 20,
   "backPackCapacityDiamond":20, 
   "detectionRadius": 0,
-  "strengthExpertise": 1,
-  "lockPickingExpertise":1
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":1000
   },
 { 
   "agentType":"agentCollect",
@@ -18,8 +18,8 @@
   "backPackCapacityGold": 5,
   "backPackCapacityDiamond":30, 
   "detectionRadius": 0,
-  "strengthExpertise": 0,
-  "lockPickingExpertise":0
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":1000
   },
 { 
   "agentType":"agentCollect",
@@ -29,8 +29,8 @@
   "backPackCapacityGold": 25,
   "backPackCapacityDiamond":10, 
   "detectionRadius": 0,
-  "strengthExpertise": 2,
-  "lockPickingExpertise":0
+  "strengthExpertise": 2000,
+  "lockPickingExpertise":1000
   },
 { 
   "agentType":"agentCollect",
@@ -40,8 +40,8 @@
   "backPackCapacityGold": 10,
   "backPackCapacityDiamond":40, 
   "detectionRadius": 0,
-  "strengthExpertise": 0,
-  "lockPickingExpertise":1
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":1000
   },
 { 
   "agentType":"agentCollect",
@@ -51,8 +51,8 @@
   "backPackCapacityGold": 70,
   "backPackCapacityDiamond":100, 
   "detectionRadius": 0,
-  "strengthExpertise": 0,
-  "lockPickingExpertise":2
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":2000
   },
 { 
   "agentType":"agentCollect",
@@ -62,8 +62,8 @@
   "backPackCapacityGold": 7,
   "backPackCapacityDiamond":30, 
   "detectionRadius": 0,
-  "strengthExpertise": 1,
-  "lockPickingExpertise":1
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":1000
   },
 { 
   "agentType":"wumpus",
@@ -73,8 +73,8 @@
   "backPackCapacityGold": 20,
   "backPackCapacityDiamond":80, 
   "detectionRadius": 2,
-  "strengthExpertise": 2,
-  "lockPickingExpertise":2
+  "strengthExpertise": 2000,
+  "lockPickingExpertise":2000
   },
 { 
   "agentType":"wumpus",
@@ -84,7 +84,7 @@
   "backPackCapacityGold": 40,
   "backPackCapacityDiamond":40, 
   "detectionRadius": 3,
-  "strengthExpertise": 1,
-  "lockPickingExpertise":1
+  "strengthExpertise": 1000,
+  "lockPickingExpertise":1000
   }
 ]
