@@ -32,7 +32,7 @@ public class CollectBehavior extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 
 		try {
 			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
@@ -100,6 +100,7 @@ public class CollectBehavior extends OneShotBehaviour{
 	}
 
 	public int onEnd() {
+		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code ");
 		return this.returnCode;
 	}
 

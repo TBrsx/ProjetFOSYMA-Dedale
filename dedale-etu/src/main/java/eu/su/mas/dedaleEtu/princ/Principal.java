@@ -347,7 +347,7 @@ public class Principal {
 		 //4) Give the class name of your agent to let the system instantiate it
 		 ag=createNewDedaleAgent(c, agentName, DummyWumpusShift2.class.getName(),
 		 entityParameters);
-		 agentList.add(ag);
+		 //agentList.add(ag);
 
 		 //1) Get the container where the agent will appear
 		 c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
@@ -362,7 +362,7 @@ public class Principal {
 		 //4) Give the class name of your agent to let the system instantiate it
 		 ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(),
 		 entityParametersg2);
-		 agentList.add(ag);
+		 //agentList.add(ag);
 
 		/*********
 		 * AGENT Explo1

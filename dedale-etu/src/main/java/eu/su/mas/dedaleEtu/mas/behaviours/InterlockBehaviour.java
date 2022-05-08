@@ -16,7 +16,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	private final ExploreCoopAgent myAgent;
 	private String receiver;
 	private boolean isReceiver;
-	private boolean verboseMode = true;
+	private boolean verboseMode = false;
 
 	/**
 	 * The agent and receiver debates about which agent as to move backward
@@ -232,7 +232,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			mapAtt.setBlocked(true);
 			this.myAgent.getMyMap().addNode(this.myAgent.getNextPosition(), mapAtt);
 			this.myAgent.getPathToFollow().clear();
-			this.myAgent.setNextPosition("");
+			//this.myAgent.setNextPosition("");
 		} else {
 			this.myAgent.increaseNbInterlockingFailed();
 			log("Failed interlocking, trying again, nb failed: " + this.myAgent.getNbInterlockingFailed());
@@ -241,11 +241,13 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+
 		// Check if the next position is blocked
 		if (this.myAgent.getMyMap().getMapAttributeFromNodeId(this.myAgent.getNextPosition()).isBlocked()) {
 			log("Next position is blocked, emptying the path");
 			this.myAgent.getPathToFollow().clear();
-			this.myAgent.setNextPosition("");
+			//this.myAgent.setNextPosition("");
 		}
 
 		log("Starts interlocking behavior");
@@ -382,7 +384,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	}
 	
 	public int onEnd() {
-		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
 		return 0;
 	}
 }

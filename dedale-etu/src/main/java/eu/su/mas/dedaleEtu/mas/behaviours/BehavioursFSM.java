@@ -169,7 +169,7 @@ public class BehavioursFSM extends FSMBehaviour {
 		
 		
 		// Init dataStore content 
-		getDataStore().put("waitingTime",100);
+		getDataStore().put("waitingTime",150);
 		getDataStore().put("movesWithoutSharing",0);
 		getDataStore().put("awareOfPlan", new LinkedList<String>());
 		getDataStore().put("decision-master", "A1");

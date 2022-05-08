@@ -42,7 +42,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			this.myAgent.setPathToFollow(new LinkedList<String>());
 		}
 		if (this.myAgent.getPathToFollow().isEmpty()){
-			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 5));
+			this.myAgent.setPathToFollow(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 3));
 			if(this.myAgent.getCurrentPosition().equalsIgnoreCase(meeting)) { //If I am at the meeting point
 				getDataStore().put("movesWithoutSharing", (int) getDataStore().get("movesWithoutSharing")+1);
 			}else {
@@ -262,11 +262,13 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			System.out.println(this.myAgent.getLocalName() + " - I created a plan, named " + this.myAgent.getCurrentPlan().getName());
 			System.out.println(elPlan);
 			this.returnCode = PLAN_SHARING;
+			return;
 		}else {
 			this.moveToMeeting();
 		}
 		
 		this.returnCode = PLAN_SHARING;
+		return;
 	}
 	
 	private void adaptPlan() {
@@ -292,20 +294,23 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 			startCollect();
 		}else {
 			//System.out.println(experts);
-			this.moveToMeeting();
 			this.returnCode = PLAN_SHARING;
+			this.moveToMeeting();
+			return;
 		}
 	}
 	private void searchPlan() {
 		//Move randomly around the meeting point, waiting for plan
-		this.moveToMeeting();
 		this.returnCode = PLAN_SHARING;
+		this.moveToMeeting();
+		return;
 	}
 	
 	private void startCollect() {
 		
 		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
 			this.returnCode = SKIP_COLLECT;
+
 			return;
 		}else {
 			//Set path to follow to reach first treasure to collect
@@ -323,12 +328,14 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				this.myAgent.setTreasureType(Observation.GOLD);
 			}
 			this.returnCode = BEGIN_COLLECT;
+
+			return;
 		}
 	}
 	
 	@Override
 	public void action() {
-		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 		this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
@@ -336,24 +343,29 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 				this.getDataStore().put("CreateNewPlan", false);
 				if(this.myAgent.getCurrentPlan() == null) {
 					this.createPlan();
+					return;
 				}else {
 					this.adaptPlan();
+					return;
 				}
 			}else {
 				this.sharePlan();
+				return;
 			}
 		}else {
-			if (this.myAgent.getCurrentPlan() == null){
+			if (this.myAgent.getCurrentPlan() == null) {
 				this.searchPlan();
+				return;
 			}else {
 				System.out.println(this.myAgent.getLocalName() + " - I received a plan, named " + this.myAgent.getCurrentPlan().getName());
 				this.startCollect();
+				return;
 			}
 		}
 	}
 	
 	public int onEnd() {
-		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode + " moves " + (int) getDataStore().get("movesWithoutSharing"));
+		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode + " moves " + (int) getDataStore().get("movesWithoutSharing"));
 		return this.returnCode;
 
 	}

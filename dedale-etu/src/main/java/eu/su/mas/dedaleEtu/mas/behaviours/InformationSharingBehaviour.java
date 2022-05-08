@@ -82,7 +82,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		if(this.myAgent.getOtherAgents().get(receiver).getNodesToTransfer().size()>0) {
 			this.shareMap(receiver);
 		}
-		if(this.myAgent.getCurrentPlan() != null && ((String) this.getDataStore().get("decision-master")).equalsIgnoreCase(this.myAgent.getLocalName())) {
+		if(this.myAgent.getCurrentPlan() != null) {
 			this.sharePlan(receiver);
 		}
 		
@@ -210,7 +210,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			msg.setSender(this.myAgent.getAID());
 			msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
 			try {
-				msg.setContentObject(this.myAgent.getCurrentPlan().partOfPlan(receiver));
+				msg.setContentObject(this.myAgent.getCurrentPlan());
 				this.myAgent.sendMessage(msg);
 				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
 						MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));
@@ -324,7 +324,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	
 	@Override
 	public void action() {
-		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 
 		//Reset number of moves we did without sharing
 		getDataStore().put("movesWithoutSharing", 0);
@@ -468,7 +468,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			
 		}
 		
-		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
 
 	}
 }
