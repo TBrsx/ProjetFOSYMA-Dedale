@@ -105,7 +105,7 @@ public class MapRepresentation implements Serializable {
 		if (mapAttribute.getClaimant().equalsIgnoreCase("")) {
 			n.setAttribute("ui.label", id);
 		} else {
-			n.setAttribute("ui.label", id + "    " + mapAttribute.getClaimant().substring(0, mapAttribute.getClaimant().length() - 5));
+			n.setAttribute("ui.label", id + "    " + mapAttribute.getClaimant());
 		}
 		return n;
 	}
