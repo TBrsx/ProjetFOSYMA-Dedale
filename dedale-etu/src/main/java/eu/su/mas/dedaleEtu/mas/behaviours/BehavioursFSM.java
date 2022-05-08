@@ -140,7 +140,6 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("collectDecision", "msgReceiver2", 0);
 		this.registerTransition("collectDecision", "Collect", 1);
 		this.registerTransition("collectDecision", "interlockEmitter2", 2);
-		this.registerTransition("collectDecision", "jobDone", 3);
 		
 		this.registerTransition("msgReceiver2", "collectDecision", 0);
 		this.registerTransition("msgReceiver2","infoSharingEmitter2",1);
@@ -156,7 +155,6 @@ public class BehavioursFSM extends FSMBehaviour {
 		this.registerTransition("Collect", "msgReceiver3", 0);
 		this.registerTransition("Collect", "msgReceiver", 1);
 		this.registerTransition("Collect","interlockEmitter3",2);
-		this.registerTransition("Collect", "jobDone", 3);
 
 		
 		this.registerTransition("msgReceiver3", "Collect", 0);
@@ -173,6 +171,8 @@ public class BehavioursFSM extends FSMBehaviour {
 		getDataStore().put("movesWithoutSharing",0);
 		getDataStore().put("awareOfPlan", new LinkedList<String>());
 		getDataStore().put("decision-master", "A1");
+		getDataStore().put("planNeedsUpdate", false);
+		getDataStore().put("skipInCollect", false);
 	}
 
 }

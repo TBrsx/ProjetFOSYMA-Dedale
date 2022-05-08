@@ -33,6 +33,22 @@ public class CollectBehavior extends OneShotBehaviour{
 	@Override
 	public void action() {
 		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		
+		if((boolean) this.getDataStore().get("skipInCollect")) {
+			if(this.myAgent.getCurrentPlan().isComplete()) {
+				this.returnCode = DONE;
+			}else {
+				this.returnCode = DONE_EXPLORE;
+				
+				//Remove the state "blocked" of nodes from my map
+				for(String node : this.myAgent.getMyMap().getBlockedNodes()) {
+					MapAttribute truc = this.myAgent.getMyMap().getMapAttributeFromNodeId(node);
+					truc.setBlocked(false);
+					this.myAgent.getMyMap().addNode(node, truc);
+				}
+				return;
+			}
+		}
 
 		try {
 			this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));

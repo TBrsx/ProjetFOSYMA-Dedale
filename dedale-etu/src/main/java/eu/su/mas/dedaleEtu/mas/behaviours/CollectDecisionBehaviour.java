@@ -24,7 +24,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private static final int PLAN_SHARING = 0;
 	private static final int BEGIN_COLLECT = 1;
 	private static final int INTERLOCKING = 2;
-	private static final int SKIP_COLLECT = 3;
 	private int returnCode;
 	private int totalDiamond = 0;
 	private int totalGold = 0;
@@ -309,8 +308,7 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	private void startCollect() {
 		
 		if (this.myAgent.getCurrentPlan().getAttributedNodes(this.myAgent.getLocalName()).isEmpty()) { //Useful if the agent had nothing to collect and so has nowhere to go
-			this.returnCode = SKIP_COLLECT;
-
+			this.getDataStore().put("skipInCollect", true);
 			return;
 		}else {
 			//Set path to follow to reach first treasure to collect

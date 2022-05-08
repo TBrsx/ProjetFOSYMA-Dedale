@@ -232,7 +232,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 			mapAtt.setBlocked(true);
 			this.myAgent.getMyMap().addNode(this.myAgent.getNextPosition(), mapAtt);
 			this.myAgent.getPathToFollow().clear();
-			//this.myAgent.setNextPosition("");
+			this.myAgent.setNextPosition("");
 		} else {
 			this.myAgent.increaseNbInterlockingFailed();
 			log("Failed interlocking, trying again, nb failed: " + this.myAgent.getNbInterlockingFailed());
@@ -247,7 +247,7 @@ public class InterlockBehaviour extends OneShotBehaviour {
 		if (this.myAgent.getMyMap().getMapAttributeFromNodeId(this.myAgent.getNextPosition()).isBlocked()) {
 			log("Next position is blocked, emptying the path");
 			this.myAgent.getPathToFollow().clear();
-			//this.myAgent.setNextPosition("");
+			this.myAgent.setNextPosition("");
 		}
 
 		log("Starts interlocking behavior");
