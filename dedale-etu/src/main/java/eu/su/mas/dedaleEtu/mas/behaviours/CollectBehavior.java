@@ -100,7 +100,7 @@ public class CollectBehavior extends OneShotBehaviour{
 	}
 
 	public int onEnd() {
-		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code ");
+		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode);
 		return this.returnCode;
 	}
 

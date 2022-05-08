@@ -324,7 +324,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 	
 	@Override
 	public void action() {
-		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
+		//System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 
 		//Reset number of moves we did without sharing
 		getDataStore().put("movesWithoutSharing", 0);
@@ -468,7 +468,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			
 		}
 		
-		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
+		//System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
 
 	}
 }

@@ -2,6 +2,8 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import eu.su.mas.dedaleEtu.mas.agents.ExploreCoopAgent;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 public class JobDoneBehaviour extends OneShotBehaviour {
 
@@ -25,7 +27,13 @@ public class JobDoneBehaviour extends OneShotBehaviour {
 				this.myAgent.doWait(1000);
 				while(!this.myAgent.moveTo(this.myAgent.getMyMap().getRandomPathFrom(this.myAgent.getCurrentPosition(), 1).get(1)));
 			}
-			
+			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("INTERLOCKING"),
+					MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF));
+			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+			if (msgReceived != null) {
+				getDataStore().put("received-message", msgReceived);
+				
+			}
 		}
 		
 	}
