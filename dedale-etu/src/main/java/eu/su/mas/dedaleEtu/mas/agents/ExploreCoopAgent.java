@@ -30,6 +30,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	private String targetPosition;
 	private LinkedList<String> pathToFollow = new LinkedList<String>();
 	private boolean isInterlocking = false;
+	private int nbInterlockingFailed = 0;
 	private HashMap<String,OtherAgent> otherAgents = new HashMap<String,OtherAgent>();
 	private Observation treasureType = null;
 	private int maxTreasureQuantity;
@@ -199,5 +200,17 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 
 	public boolean isInterlocking() {
 		return isInterlocking;
+	}
+
+	public int getNbInterlockingFailed() {
+		return nbInterlockingFailed;
+	}
+
+	public void increaseNbInterlockingFailed() {
+		this.nbInterlockingFailed++;
+	}
+
+	public void resetNbInterlockingFailed() {
+		this.nbInterlockingFailed = 0;
 	}
 }
