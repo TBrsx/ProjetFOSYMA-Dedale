@@ -241,8 +241,6 @@ public class InterlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
-
 		// Check if the next position is blocked
 		if (this.myAgent.getMyMap().getMapAttributeFromNodeId(this.myAgent.getNextPosition()).isBlocked()) {
 			log("Next position is blocked, emptying the path");
@@ -384,7 +382,6 @@ public class InterlockBehaviour extends OneShotBehaviour {
 	}
 	
 	public int onEnd() {
-		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName());
 		return 0;
 	}
 }

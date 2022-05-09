@@ -333,7 +333,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	
 	@Override
 	public void action() {
-		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 		this.myAgent.doWait((int) this.getDataStore().get("waitingTime"));
 		String decisionMaster = (String) this.getDataStore().get("decision-master");
 		if(decisionMaster.equalsIgnoreCase(this.myAgent.getLocalName())){
@@ -363,7 +362,6 @@ public class CollectDecisionBehaviour extends OneShotBehaviour{
 	}
 	
 	public int onEnd() {
-		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode + " moves " + (int) getDataStore().get("movesWithoutSharing"));
 		return this.returnCode;
 
 	}

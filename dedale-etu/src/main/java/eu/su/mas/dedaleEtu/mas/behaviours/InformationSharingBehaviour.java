@@ -82,7 +82,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 		if(this.myAgent.getOtherAgents().get(receiver).getNodesToTransfer().size()>0) {
 			this.shareMap(receiver);
 		}
-		if(this.myAgent.getCurrentPlan() != null) {
+		if(this.myAgent.getCurrentPlan() != null && this.myAgent.getLocalName().equalsIgnoreCase((String) this.getDataStore().get("decision-master"))) {
 			this.sharePlan(receiver);
 		}
 		
@@ -210,7 +210,7 @@ public class InformationSharingBehaviour extends OneShotBehaviour {
 			msg.setSender(this.myAgent.getAID());
 			msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
 			try {
-				msg.setContentObject(this.myAgent.getCurrentPlan());
+				msg.setContentObject(this.myAgent.getCurrentPlan().partOfPlan(receiver));
 				this.myAgent.sendMessage(msg);
 				msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("SHARE-PLAN"),
 						MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),MessageTemplate.MatchSender(new AID(receiver,AID.ISLOCALNAME))));

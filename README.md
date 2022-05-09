@@ -1,4 +1,4 @@
-Our take/solution on the Dedale project, done during the "FOSYMA" teaching at Sorbonne University. We worked on the "Collect maximum amount of treasure" goal.
+Our icomplete take/solution on the Dedale project, done during the "FOSYMA" teaching at Sorbonne University. We worked on the "Collect maximum amount of treasure" goal.
 
 See below original readme taken from Dedale Project :
 

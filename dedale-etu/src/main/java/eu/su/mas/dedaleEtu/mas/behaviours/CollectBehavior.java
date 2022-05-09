@@ -32,7 +32,6 @@ public class CollectBehavior extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-		System.out.println(this.myAgent.getLocalName() + " - started behavior " + this.getBehaviourName());
 		
 		if((boolean) this.getDataStore().get("skipInCollect")) {
 			if(this.myAgent.getCurrentPlan().isComplete()) {
@@ -116,7 +115,6 @@ public class CollectBehavior extends OneShotBehaviour{
 	}
 
 	public int onEnd() {
-		System.out.println(this.myAgent.getLocalName() + " - ended behavior " + this.getBehaviourName() + " return code " + this.returnCode);
 		return this.returnCode;
 	}
 
